@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "The Vault",
+  "version": "1.0.0",
+  "description": "A premium, local-first encrypted identity vault for passwords, addresses, cards, notes, and documents.",
+  "icons": {
+    "16": "icons/vault-16.png",
+    "48": "icons/vault-48.png",
+    "128": "icons/vault-128.png"
+  },
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icons/vault-16.png",
+      "48": "icons/vault-48.png"
+    },
+    "default_title": "The Vault"
+  },
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
