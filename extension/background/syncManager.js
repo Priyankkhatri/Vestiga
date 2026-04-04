@@ -1,9 +1,13 @@
 /**
- * Sync Manager
- * Logic for synchronizing vault data with the remote server.
+ * syncManager.js
  */
 
-export const syncVault = async () => {
-  console.log('Syncing vault...');
-  // Implement sync logic
+var syncManager = {
+  syncVault() {
+    console.log("Sync triggered");
+  }
 };
+
+if (typeof self !== 'undefined') {
+  self.syncManager = syncManager;
+}

@@ -1,22 +1,34 @@
 /**
- * API Client
- * Centralized fetch/axios logic for communicating with the My-Vault server.
+ * apiClient.js
+ * Mock API calls for future integration
  */
 
-const BASE_URL = 'https://api.my-vault.com'; // Placeholder base URL
+var apiClient = {
+  async get(url) {
+    console.log(`[apiClient] GET ${url}`);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          status: 200,
+          data: { mock: true, url, message: 'Simulated GET response' }
+        });
+      }, 500);
+    });
+  },
 
-export const request = async (endpoint, options = {}) => {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      ...options.headers,
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API error: ${response.statusText}`);
+  async post(url, body) {
+    console.log(`[apiClient] POST ${url}`, body);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          status: 201,
+          data: { mock: true, url, body, message: 'Simulated POST response' }
+        });
+      }, 500);
+    });
   }
-  
-  return response.json();
 };
+
+if (typeof self !== 'undefined') {
+  self.apiClient = apiClient;
+}

@@ -9,12 +9,6 @@
  */
 
 import { api } from './apiClient';
-import { getEncryptionKey } from './authService';
-import {
- encryptVaultItem,
- decryptVaultItem,
- type EncryptedVaultItem,
-} from '../../packages/crypto/src/index';
 import type { VaultItem } from '../types/vault';
 import { v4 as uuid } from 'uuid';
 
@@ -35,90 +29,85 @@ function generateId(): string {
 // ─── Fetch & Decrypt All Items ──────────────────────────────────
 
 export async function fetchVaultItems(): Promise<VaultItem[]> {
- const key = getEncryptionKey();
- if (!key) throw new Error('Vault is locked — no encryption key available');
-
- const res = await api.get<EncryptedVaultItem[]>('/vault/items');
- if (!res.success || !res.data) {
- throw new Error(res.error || 'Failed to fetch vault items');
- }
-
- // Decrypt all items in parallel
- const decrypted = await Promise.all(
- res.data.map(async (encrypted) => {
- try {
- return await decryptVaultItem<VaultItem>(key, encrypted);
- } catch (error) {
- console.error(`[Vault] Failed to decrypt item ${encrypted.id}:`, error);
- return null;
- }
- })
- );
-
- return decrypted.filter((item): item is VaultItem => item !== null);
+  const res = await api.get<VaultItem[]>('/vault/items');
+  if (!res.success || !res.data) {
+    throw new Error(res.error || 'Failed to fetch vault items');
+  }
+  return res.data;
 }
 
 // ─── Save (Encrypt & Create) ────────────────────────────────────
 
 export async function saveVaultItem(item: VaultItem): Promise<{ success: boolean; error?: string }> {
- const key = getEncryptionKey();
- if (!key) return { success: false, error: 'Vault is locked' };
+  try {
+    if (!item.id) {
+      (item as any).id = generateId();
+    }
 
- try {
- // Ensure item has an ID
- if (!item.id) {
- (item as any).id = generateId();
- }
+    // Determine specific fields based on item type
+    let username = '';
+    let password = '';
+    if (item.type === 'password') {
+      username = item.username;
+      password = item.password;
+    }
 
- const encrypted = await encryptVaultItem(key, item);
+    const res = await api.post('/vault/items', {
+      id: item.id,
+      title: item.title,
+      username,
+      password,
+      type: item.type,
+      favorite: item.favorite,
+      tags: item.tags,
+      notes: item.notes || item.folder || '',
+    });
 
- const res = await api.post('/vault/items', {
- id: encrypted.id,
- encryptedData: encrypted.encryptedData.ciphertext,
- iv: encrypted.encryptedData.iv,
- itemType: encrypted.itemType,
- metadata: encrypted.metadata,
- });
+    if (!res.success) {
+      return { success: false, error: res.error || 'Failed to save item' };
+    }
 
- if (!res.success) {
- return { success: false, error: res.error || 'Failed to save item' };
- }
-
- return { success: true };
- } catch (error) {
- console.error('[Vault] Save error:', error);
- return { success: false, error: 'Encryption or save failed' };
- }
+    return { success: true };
+  } catch (error) {
+    console.error('[Vault] Save error:', error);
+    return { success: false, error: 'Vault save failed' };
+  }
 }
 
 // ─── Update (Encrypt & Update) ──────────────────────────────────
 
 export async function updateVaultItem(
- item: VaultItem,
- version: number = 1
+  item: VaultItem,
+  version: number = 1
 ): Promise<{ success: boolean; error?: string }> {
- const key = getEncryptionKey();
- if (!key) return { success: false, error: 'Vault is locked' };
+  try {
+    let username = '';
+    let password = '';
+    if (item.type === 'password') {
+      username = item.username;
+      password = item.password;
+    }
 
- try {
- const encrypted = await encryptVaultItem(key, item);
+    const res = await api.put(`/vault/items/${item.id}`, {
+      title: item.title,
+      username,
+      password,
+      type: item.type,
+      favorite: item.favorite,
+      tags: item.tags,
+      notes: item.notes || item.folder || '',
+      version,
+    });
 
- const res = await api.put(`/vault/items/${item.id}`, {
- encryptedData: encrypted.encryptedData.ciphertext,
- iv: encrypted.encryptedData.iv,
- metadata: encrypted.metadata,
- version,
- });
+    if (!res.success) {
+      return { success: false, error: res.error || 'Failed to update item' };
+    }
 
- if (!res.success) {
- return { success: false, error: res.error || 'Failed to update item' };
- }
-
- return { success: true };
- } catch (error) {
- console.error('[Vault] Update error:', error);
- return { success: false, error: 'Encryption or update failed' };
- }
+    return { success: true };
+  } catch (error) {
+    console.error('[Vault] Update error:', error);
+    return { success: false, error: 'Vault update failed' };
+  }
 }
 
 // ─── Delete ─────────────────────────────────────────────────────
@@ -179,18 +168,12 @@ function getAISettings() {
  */
 export async function reEncryptAllItems(
   items: VaultItem[], 
-  newKey: CryptoKey
+  newKey: CryptoKey // Kept signature for compatibility, but no longer encrypting
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const results = await Promise.all(
       items.map(async (item) => {
-        const encrypted = await encryptVaultItem(newKey, item);
-        return api.put(`/vault/items/${item.id}`, {
-          encryptedData: encrypted.encryptedData.ciphertext,
-          iv: encrypted.encryptedData.iv,
-          metadata: encrypted.metadata,
-          version: (item as any).version || 1,
-        });
+        return updateVaultItem(item, (item as any).version || 1);
       })
     );
 
@@ -201,8 +184,8 @@ export async function reEncryptAllItems(
 
     return { success: true };
   } catch (error) {
-    console.error('[Vault] Batch re-encryption error:', error);
-    return { success: false, error: 'Batch encryption failed' };
+    console.error('[Vault] Batch update error:', error);
+    return { success: false, error: 'Batch update failed' };
   }
 }
 

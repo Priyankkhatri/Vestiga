@@ -1,14 +1,23 @@
 /**
- * Alarm Manager
- * Logic for managing periodic background tasks.
+ * alarmManager.js
  */
 
+var alarmManager = {
+  startAutoLockTimer() {
+    chrome.alarms.create("autoLock", { delayInMinutes: 5 });
+    console.log("[alarmManager] Auto-lock timer started (5 minutes).");
+  }
+};
+
 chrome.alarms.onAlarm.addListener((alarm) => {
-  console.log('Alarm triggered:', alarm.name);
-  if (alarm.name === 'vaultSync') {
-    // Perform sync
+  if (alarm.name === "autoLock") {
+    console.log("[alarmManager] Auto-lock timer expired. Locking vault.");
+    if (typeof self !== 'undefined' && self.authService) {
+      self.authService.lock();
+    }
   }
 });
 
-// Setup default alarms
-chrome.alarms.create('vaultSync', { delayInMinutes: 60, periodInMinutes: 60 });
+if (typeof self !== 'undefined') {
+  self.alarmManager = alarmManager;
+}

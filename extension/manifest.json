@@ -7,12 +7,26 @@
     "default_popup": "popup/index.html"
   },
   "background": {
-    "service_worker": "background/service-worker.js"
+    "service_worker": "service-worker.js"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content/content-script.js"]
+      "css": ["content/autofill-ui.css"],
+      "js": [
+        "content/formDetector.js",
+        "content/autofillEngine.js",
+        "content/autofillDropdown.js",
+        "content/savePrompt.js",
+        "content/content-script.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["content/autofill-ui.css"],
+      "matches": ["<all_urls>"]
     }
   ],
   "permissions": [

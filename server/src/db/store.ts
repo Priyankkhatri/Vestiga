@@ -27,10 +27,13 @@ interface UserRow {
 interface VaultItemRow {
   id: string;
   user_id: string;
-  encrypted_data: string;
-  iv: string;
-  item_type: string;
-  metadata: Record<string, unknown>;
+  title: string;
+  username?: string;
+  password?: string;
+  type: string;
+  favorite: boolean;
+  tags: string[];
+  notes?: string;
   version: number;
   created_at: Date;
   updated_at: Date;
@@ -47,13 +50,7 @@ interface DeviceSessionRow {
   created_at: Date;
 }
 
-interface AIQuotaRow {
-  id: string;
-  user_id: string;
-  feature: string;
-  usage_count: number;
-  quota_date: string; // YYYY-MM-DD
-}
+
 
 interface AuditLogRow {
   id: string;
@@ -71,7 +68,6 @@ const store = {
   users: new Map<string, UserRow>(),
   vaultItems: new Map<string, VaultItemRow>(),
   deviceSessions: new Map<string, DeviceSessionRow>(),
-  aiQuotas: new Map<string, AIQuotaRow>(),
   auditLogs: [] as AuditLogRow[],
 };
 
@@ -82,7 +78,6 @@ function saveToDisk() {
     users: Array.from(store.users.entries()),
     vaultItems: Array.from(store.vaultItems.entries()),
     deviceSessions: Array.from(store.deviceSessions.entries()),
-    aiQuotas: Array.from(store.aiQuotas.entries()),
     auditLogs: store.auditLogs,
   };
   fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
@@ -95,7 +90,6 @@ function loadFromDisk() {
     store.users = new Map(data.users);
     store.vaultItems = new Map(data.vaultItems);
     store.deviceSessions = new Map(data.deviceSessions);
-    store.aiQuotas = new Map(data.aiQuotas);
     store.auditLogs = data.auditLogs;
   } catch (err) {
     console.error('Failed to load dev-db.json:', err);
@@ -151,10 +145,6 @@ export async function deleteUser(userId: string) {
     for (const [sessionId, session] of store.deviceSessions.entries()) {
       if (session.user_id === userId) store.deviceSessions.delete(sessionId);
     }
-    // AI Quotas
-    for (const [key, quota] of store.aiQuotas.entries()) {
-      if (quota.user_id === userId) store.aiQuotas.delete(key);
-    }
     saveToDisk();
     return true;
   }
@@ -164,13 +154,13 @@ export async function deleteUser(userId: string) {
 // ─── Vault Item Operations ──────────────────────────────────────
 
 export async function createVaultItem(
-  userId: string, id: string, encryptedData: string, iv: string,
-  itemType: string, metadata: Record<string, unknown>
+  userId: string, id: string, title: string, username: string | undefined,
+  password: string | undefined, type: string, favorite: boolean, tags: string[], notes: string | undefined
 ) {
   const now = new Date();
   const item: VaultItemRow = {
-    id, user_id: userId, encrypted_data: encryptedData, iv, item_type: itemType,
-    metadata, version: 1, created_at: now, updated_at: now,
+    id, user_id: userId, title, username, password, type,
+    favorite, tags, notes, version: 1, created_at: now, updated_at: now,
   };
   store.vaultItems.set(id, item);
   saveToDisk();
@@ -192,16 +182,20 @@ export async function getVaultItem(userId: string, itemId: string) {
 }
 
 export async function updateVaultItem(
-  userId: string, itemId: string, encryptedData: string, iv: string,
-  metadata: Record<string, unknown>, expectedVersion: number
+  userId: string, itemId: string, title: string, username: string | undefined,
+  password: string | undefined, type: string, favorite: boolean, tags: string[], notes: string | undefined, expectedVersion: number
 ) {
   const item = store.vaultItems.get(itemId);
   if (!item || item.user_id !== userId) return null;
   if (item.version !== expectedVersion) return { conflict: true, serverVersion: item.version };
 
-  item.encrypted_data = encryptedData;
-  item.iv = iv;
-  item.metadata = metadata;
+  item.title = title;
+  item.username = username;
+  item.password = password;
+  item.type = type;
+  item.favorite = favorite;
+  item.tags = tags;
+  item.notes = notes;
   item.version += 1;
   item.updated_at = new Date();
   saveToDisk();
@@ -281,29 +275,7 @@ export async function deleteOtherDeviceSessions(userId: string, currentSessionId
   return deletedCount;
 }
 
-// ─── AI Quota Operations ────────────────────────────────────────
 
-export async function getQuotaUsage(userId: string, feature: string) {
-  const today = new Date().toISOString().split('T')[0];
-  const key = `${userId}:${feature}:${today}`;
-  const row = store.aiQuotas.get(key);
-  return row?.usage_count || 0;
-}
-
-export async function incrementQuota(userId: string, feature: string) {
-  const today = new Date().toISOString().split('T')[0];
-  const key = `${userId}:${feature}:${today}`;
-  const existing = store.aiQuotas.get(key);
-  if (existing) {
-    existing.usage_count += 1;
-    saveToDisk();
-    return existing.usage_count;
-  }
-  const row: AIQuotaRow = { id: uuid(), user_id: userId, feature, usage_count: 1, quota_date: today };
-  store.aiQuotas.set(key, row);
-  saveToDisk();
-  return 1;
-}
 
 // ─── Audit Log Operations ───────────────────────────────────────
 

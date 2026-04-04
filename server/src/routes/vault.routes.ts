@@ -12,22 +12,23 @@ router.use(authMiddleware);
 
 const createItemSchema = z.object({
   id: z.string().uuid(),
-  encryptedData: z.string().min(1),
-  iv: z.string().min(1),
-  itemType: z.enum(['password', 'address', 'card', 'note', 'document']),
-  metadata: z.object({
-    tags: z.array(z.string()).optional().default([]),
-    folder: z.string().optional().default(''),
-    title: z.string().optional().default(''),
-    createdAt: z.string().optional(),
-    updatedAt: z.string().optional(),
-  }).optional().default({}),
+  title: z.string().min(1),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  type: z.string(),
+  favorite: z.boolean().optional().default(false),
+  tags: z.array(z.string()).optional().default([]),
+  notes: z.string().optional()
 });
 
 const updateItemSchema = z.object({
-  encryptedData: z.string().min(1),
-  iv: z.string().min(1),
-  metadata: z.record(z.unknown()).optional(),
+  title: z.string().min(1),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  type: z.string(),
+  favorite: z.boolean().optional().default(false),
+  tags: z.array(z.string()).optional().default([]),
+  notes: z.string().optional(),
   version: z.number().int().positive(),
 });
 
@@ -37,16 +38,19 @@ router.get('/items', async (req: Request, res: Response): Promise<void> => {
   try {
     const items = await db.getVaultItems(req.user!.userId);
 
-    await db.createAuditLog(req.user!.userId, 'vault_access', { action: 'list' }, req.ip || '', req.headers['user-agent'] || '');
+    await db.createAuditLog(req.user!.userId, 'vault_access', { action: 'list' }, req.ip || '', req.headers['user-agent'] as string || '');
 
     res.json({
       success: true,
       data: items.map(item => ({
         id: item.id,
-        encryptedData: item.encrypted_data,
-        iv: item.iv,
-        itemType: item.item_type,
-        metadata: item.metadata,
+        title: item.title,
+        username: item.username,
+        password: item.password,
+        type: item.type,
+        favorite: item.favorite,
+        tags: item.tags,
+        notes: item.notes,
         version: item.version,
         createdAt: item.created_at,
         updatedAt: item.updated_at,
@@ -67,13 +71,16 @@ router.post('/items', async (req: Request, res: Response): Promise<void> => {
     const item = await db.createVaultItem(
       req.user!.userId,
       body.id,
-      body.encryptedData,
-      body.iv,
-      body.itemType,
-      body.metadata
+      body.title,
+      body.username,
+      body.password,
+      body.type,
+      body.favorite,
+      body.tags,
+      body.notes
     );
 
-    await db.createAuditLog(req.user!.userId, 'vault_create', { itemType: body.itemType }, req.ip || '', req.headers['user-agent'] || '');
+    await db.createAuditLog(req.user!.userId, 'vault_create', { itemType: body.type }, req.ip || '', req.headers['user-agent'] as string || '');
 
     res.status(201).json({
       success: true,
@@ -103,9 +110,13 @@ router.put('/items/:id', async (req: Request, res: Response): Promise<void> => {
     const result = await db.updateVaultItem(
       req.user!.userId,
       req.params.id,
-      body.encryptedData,
-      body.iv,
-      body.metadata || {},
+      body.title,
+      body.username,
+      body.password,
+      body.type,
+      body.favorite,
+      body.tags,
+      body.notes,
       body.version
     );
 
@@ -123,7 +134,7 @@ router.put('/items/:id', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    await db.createAuditLog(req.user!.userId, 'vault_update', { itemId: req.params.id }, req.ip || '', req.headers['user-agent'] || '');
+    await db.createAuditLog(req.user!.userId, 'vault_update', { itemId: req.params.id }, req.ip || '', req.headers['user-agent'] as string || '');
 
     res.json({
       success: true,
@@ -149,7 +160,7 @@ router.delete('/items/:id', async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    await db.createAuditLog(req.user!.userId, 'vault_delete', { itemId: req.params.id }, req.ip || '', req.headers['user-agent'] || '');
+    await db.createAuditLog(req.user!.userId, 'vault_delete', { itemId: req.params.id }, req.ip || '', req.headers['user-agent'] as string || '');
 
     res.json({ success: true });
   } catch (error) {
@@ -169,10 +180,13 @@ router.post('/sync', async (req: Request, res: Response): Promise<void> => {
       data: {
         items: items.map(item => ({
           id: item.id,
-          encryptedData: item.encrypted_data,
-          iv: item.iv,
-          itemType: item.item_type,
-          metadata: item.metadata,
+          title: item.title,
+          username: item.username,
+          password: item.password,
+          type: item.type,
+          favorite: item.favorite,
+          tags: item.tags,
+          notes: item.notes,
           version: item.version,
           createdAt: item.created_at,
           updatedAt: item.updated_at,
