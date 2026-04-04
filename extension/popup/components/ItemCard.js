@@ -34,7 +34,10 @@
         <div class="item-avatar">${escapeHtml(initial)}</div>
         <div class="item-info">
           <div class="item-title">${escapeHtml(item.title || "Untitled")}</div>
-          <div class="item-username">${escapeHtml(item.username || "")}</div>
+          <div class="item-username">
+            ${escapeHtml(item.username || "")}
+            ${item.isSuggested ? '<span class="suggested-badge">Suggested</span>' : ''}
+          </div>
         </div>
         <div class="item-actions">
           <button class="action-btn autofill-btn" data-action="autofill" title="Autofill on page">

@@ -165,8 +165,16 @@ export function VaultLibrary() {
         {/* VAULT LIST */}
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="p-8 h-full flex flex-col items-center justify-center text-gray-500">
-              <Loader2 className="animate-spin w-8 h-8 text-teal-600" />
+            <div className="p-6 space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-6 py-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                  <div className="w-10 h-10 rounded-xl skeleton-shimmer flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-1/3 rounded skeleton-shimmer" />
+                    <div className="h-3 w-1/4 rounded skeleton-shimmer" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="p-8 h-full flex items-center justify-center">

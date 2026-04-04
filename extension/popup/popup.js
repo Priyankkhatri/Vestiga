@@ -183,10 +183,16 @@
       } else {
         errorEl.textContent = (res && res.error) || "Sign in failed. Check your credentials.";
         errorEl.classList.remove("hidden");
+        errorEl.classList.remove("animate-shake");
+        void errorEl.offsetWidth; // trigger reflow
+        errorEl.classList.add("animate-shake");
       }
     } catch (err) {
       errorEl.textContent = err.message || "Sign in failed.";
       errorEl.classList.remove("hidden");
+      errorEl.classList.remove("animate-shake");
+      void errorEl.offsetWidth; // trigger reflow
+      errorEl.classList.add("animate-shake");
     } finally {
       btn.disabled = false;
       btn.textContent = "Sign In";
@@ -264,10 +270,16 @@
       } else {
         errorEl.textContent = (res && res.error) || "Failed. Please try again.";
         errorEl.classList.remove("hidden");
+        errorEl.classList.remove("animate-shake");
+        void errorEl.offsetWidth; // trigger reflow
+        errorEl.classList.add("animate-shake");
       }
     } catch (err) {
       errorEl.textContent = err.message || "Operation failed.";
       errorEl.classList.remove("hidden");
+      errorEl.classList.remove("animate-shake");
+      void errorEl.offsetWidth; // trigger reflow
+      errorEl.classList.add("animate-shake");
     } finally {
       btn.disabled = false;
       btn.textContent = masterPwMode === "setup" ? "Create & Encrypt Vault" : "Unlock Vault";
@@ -325,7 +337,16 @@
       });
     }
 
-    window.ItemList.render(items, {
+    var mappedItems = items.map(function(item) {
+      // Create a shallow copy so we can attach a transient isSuggested flag
+      var i = Object.assign({}, item);
+      if (currentDomain && !query && (i.url || "").toLowerCase().includes(currentDomain)) {
+        i.isSuggested = true;
+      }
+      return i;
+    });
+
+    window.ItemList.render(mappedItems, {
       onCopyUsername: function (val) { copyToClipboard(val, "Username copied"); },
       onCopyPassword: function (val) { copyToClipboard(val, "Password copied"); },
       onAutofill: function (item) { handleAutofill(item); },

@@ -56,7 +56,7 @@ export function MasterPasswordModal({ mode, error, isLoading, onSetup, onUnlock 
         className="relative w-full max-w-md"
       >
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+        <div className={`bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden ${error && !isLoading ? 'animate-shake' : ''}`}>
           {/* Header */}
           <div className="px-8 pt-10 pb-2 flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/25 mb-6">
@@ -168,9 +168,12 @@ export function MasterPasswordModal({ mode, error, isLoading, onSetup, onUnlock 
         </div>
 
         {/* Zero-knowledge badge */}
-        <div className="mt-4 flex items-center justify-center gap-2 text-gray-500">
-          <ShieldCheck size={14} />
-          <span className="text-xs font-medium">Zero-Knowledge Encryption</span>
+        <div className="mt-6 flex flex-col items-center justify-center gap-1 text-gray-500">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={14} className="text-teal-600" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-teal-700/80">Encrypted Locally</span>
+          </div>
+          <span className="text-[11px] text-gray-400">Only you can access this data.</span>
         </div>
       </motion.div>
     </div>

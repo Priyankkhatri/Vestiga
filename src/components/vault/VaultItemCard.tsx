@@ -36,10 +36,10 @@ export const VaultItemCard = memo(function VaultItemCard({ item }: VaultItemCard
   return (
     <div 
       onClick={() => navigate(`/item/${item.id}`)}
-      className="flex items-center gap-3 px-6 py-3 hover:bg-gray-50 group cursor-pointer border-l-2 border-transparent transition-colors"
+      className="flex items-center gap-3 px-6 py-3 hover:bg-white group cursor-pointer border-b border-gray-100 hover:shadow-md hover:-translate-y-[1px] transition-all duration-200 active:scale-[0.99] relative"
     >
       {/* Icon Area */}
-      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 flex-shrink-0 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors duration-200 border border-gray-100">
         {getCategoryIcon(item.type, 18)}
       </div>
 
@@ -74,7 +74,7 @@ export const VaultItemCard = memo(function VaultItemCard({ item }: VaultItemCard
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none transition-colors active:scale-95"
             title="Visit website"
           >
             <ExternalLink size={16} />

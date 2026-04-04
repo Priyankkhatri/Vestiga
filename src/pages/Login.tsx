@@ -57,7 +57,7 @@ export function Login() {
           <p className="text-sm font-medium text-gray-500 mt-2">Sign in to your secure cloud perimeter</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
+        <div className={`bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8 ${formError ? 'animate-shake' : ''}`}>
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
               type="email"
@@ -101,6 +101,15 @@ export function Login() {
               </Link>
             </p>
           </div>
+        </div>
+
+        {/* Trust Badge */}
+        <div className="mt-8 flex flex-col items-center justify-center gap-1 text-gray-500">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={14} className="text-teal-600" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-teal-700/80">End-to-End Encrypted</span>
+          </div>
+          <span className="text-[11px] text-gray-400">We cannot see your passwords.</span>
         </div>
       </motion.div>
     </div>
