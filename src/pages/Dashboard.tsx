@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { AlertTriangle, Clock, ShieldCheck, FolderLock, ArrowRight, Activity, ShieldAlert, KeyRound } from 'lucide-react';
 import { useVault } from '../context/VaultContext';
 import { getCategoryIcon } from '../components/vault/VaultHelpers';
 import { Badge } from '../components/ui/Badge';
 import { PasswordItem } from '../types/vault';
+import React from 'react';
+import { X, ArrowRight, ShieldCheck, Activity, FolderLock, ShieldAlert, KeyRound, Clock, AlertTriangle } from 'lucide-react';
 import { calculatePasswordStrength, findReusedPasswordsSync, calculateSecurityScore } from '../utils/securityUtils';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +14,7 @@ export function Dashboard() {
   const { items } = useVault();
   const { tier, itemCount, refreshProfile, session } = useAuth();
   const navigate = useNavigate();
+  const [showBanner, setShowBanner] = React.useState(true);
 
   const handleUpgrade = async () => {
     try {
@@ -81,12 +83,21 @@ export function Dashboard() {
       </div>
 
       {/* Pro Upgrade Banner */}
-      {tier === 'free' && (
+      {tier === 'free' && showBanner && (
         <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
           className="mb-8 relative overflow-hidden bg-gradient-to-r from-teal-600 to-cyan-600 rounded-2xl p-6 text-white shadow-lg shadow-teal-900/10 group"
         >
+          {/* Close Button */}
+          <button 
+            onClick={() => setShowBanner(false)}
+            className="absolute top-4 right-4 z-20 p-1.5 bg-black/10 hover:bg-black/20 rounded-full transition-colors"
+          >
+            <X size={16} />
+          </button>
+
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl transform translate-x-20 -translate-y-20 group-hover:scale-110 transition-transform duration-700" />
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4">
