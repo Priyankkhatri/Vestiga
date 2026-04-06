@@ -59,7 +59,6 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
         { iterations: 0 },
         user.id
       );
-      // Actually, my createUser uses uuid_generate_v4(). I should probably fix that.
     }
 
     req.user = {

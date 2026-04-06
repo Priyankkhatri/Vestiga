@@ -36,7 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/profile`, {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${baseUrl}/auth/profile`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
