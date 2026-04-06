@@ -18,7 +18,7 @@ export function Dashboard() {
 
   const handleUpgrade = async () => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://vestiga-api.onrender.com/api';
       const response = await fetch(`${baseUrl}/payments/create-subscription`, {
         method: 'POST',
         headers: {
