@@ -26,15 +26,25 @@ const app = express();
 // ─── Security Middleware ────────────────────────────────────────
 
 app.use(helmet({
-  contentSecurityPolicy: env.isProduction ? undefined : false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+      frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
+      imgSrc: ["'self'", "data:", "https://checkout.razorpay.com"],
+      connectSrc: ["'self'", "https://api.razorpay.com", "https://lvodmlfhbchogmkdgooy.supabase.co"],
+    },
+  },
 }));
 
 app.use(cors({
   origin: (origin, callback) => {
-    // In dev, allow any localhost origin
-    if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+    const allowed = env.corsOrigin.split(',').map(s => s.trim());
+    // In dev, allow any localhost origin. In prod, allow specified origins.
+    if (!origin || allowed.includes(origin) || origin.includes('localhost') || origin.includes('127.0.0.1')) {
       callback(null, true);
     } else {
+      console.warn(`[CORS] Blocked request from: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
