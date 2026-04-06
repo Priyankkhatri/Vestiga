@@ -1,5 +1,5 @@
 /**
- * My-Vault Extension Configuration
+ * Vestiga Extension Configuration
  *
  * ⚠️ WARNING: DO NOT COMMIT SENSITIVE KEYS TO GITHUB.
  * Replace placeholders with actual values locally.

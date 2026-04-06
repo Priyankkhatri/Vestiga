@@ -57,7 +57,7 @@
 
         sendResponse({ success: true });
       } else {
-        console.warn("[My-Vault] No login forms detected on this page.");
+        console.warn("[Vestiga] No login forms detected on this page.");
         sendResponse({ success: false, error: "No login forms found" });
       }
 

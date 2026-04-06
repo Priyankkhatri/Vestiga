@@ -18,7 +18,7 @@ try {
   );
 
 } catch (e) {
-  console.error("My-Vault Service Worker: Script loading failed:", e);
+  console.error("Vestiga Service Worker: Script loading failed:", e);
 }
 
 chrome.runtime.onInstalled.addListener(() => {

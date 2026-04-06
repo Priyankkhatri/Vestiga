@@ -42,7 +42,7 @@
     prompt.innerHTML = `
       <div class="mv-save-header">
         ${SHIELD_SVG}
-        <span>Save to My-Vault?</span>
+        <span>Save to Vestiga?</span>
       </div>
       <div class="mv-save-body">
         <div class="mv-save-field"><strong>Username:</strong> ${escapeHtml(credentials.username || "(none)")}</div>
@@ -87,13 +87,13 @@
       { type: "VAULT", action: "add", payload },
       (response) => {
         if (chrome.runtime.lastError) {
-          console.warn("[My-Vault] Failed to save credentials:", chrome.runtime.lastError.message);
+          console.warn("[Vestiga] Failed to save credentials:", chrome.runtime.lastError.message);
           return;
         }
         if (response && response.success) {
 
         } else {
-          console.warn("[My-Vault] Save failed:", response?.error);
+          console.warn("[Vestiga] Save failed:", response?.error);
         }
       }
     );

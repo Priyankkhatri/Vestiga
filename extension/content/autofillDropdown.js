@@ -51,7 +51,7 @@
     // Header
     const header = document.createElement("div");
     header.className = "mv-dropdown-header";
-    header.innerHTML = `${SHIELD_SVG} <span>My-Vault Autofill</span>`;
+    header.innerHTML = `${SHIELD_SVG} <span>Vestiga Autofill</span>`;
     dropdown.appendChild(header);
 
     if (!credentials || credentials.length === 0) {
@@ -123,7 +123,7 @@
       { type: "VAULT", action: "getAll" },
       (response) => {
         if (chrome.runtime.lastError) {
-          console.warn("[My-Vault] Could not fetch credentials:", chrome.runtime.lastError.message);
+          console.warn("[Vestiga] Could not fetch credentials:", chrome.runtime.lastError.message);
           renderDropdown(activeShadow, [], formDescriptor);
           return;
         }

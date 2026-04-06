@@ -40,7 +40,7 @@
    */
   function fill(credentials, formDescriptor) {
     if (!credentials || !formDescriptor) {
-      console.warn("[My-Vault] fill() called with missing arguments.");
+      console.warn("[Vestiga] fill() called with missing arguments.");
       return;
     }
 

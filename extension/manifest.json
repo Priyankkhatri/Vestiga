@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "My-Vault",
+  "name": "Vestiga Password Manager",
   "version": "1.0.0",
-  "description": "Secure password manager extension for My-Vault.",
+  "description": "Secure password manager extension for Vestiga.",
   "action": {
     "default_popup": "popup/index.html"
   },

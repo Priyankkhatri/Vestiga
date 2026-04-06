@@ -1,76 +1,94 @@
-# My-Vault — Premium AI-Powered Security Infrastructure
+# 🛡️ Vestiga — AI-Powered Zero-Knowledge Security Infrastructure.
 
-My-Vault is a high-precision, zero-knowledge password manager designed for the modern security-conscious professional. Built with a **Light-First, Minimalist SaaS Aesthetic**, it prioritizes clarity, trust, and speed while maintaining the highest technical security standards.
+> **Vestiga** is a premium, open-source, end-to-end encrypted password manager designed for the modern security-conscious professional. Built with a high-conversion SaaS aesthetic, it combines military-grade encryption with AI-powered security intelligence.
 
-![Vault Dashboard Status](https://img.shields.io/badge/Security-AES--256-emerald?style=for-the-badge&logo=shield)
-![AI Engine](https://img.shields.io/badge/AI-Groq%20Llama--3-teal?style=for-the-badge&logo=google-gemini)
-![Frontend](https://img.shields.io/badge/Frontend-Vite%20%2B%20React%20%2B%20TS-blue?style=for-the-badge&logo=react)
+![Vestiga Banner](https://img.shields.io/badge/Security-AES--256--GCM-teal?style=for-the-badge&logo=shield)
+![AI Intelligence](https://img.shields.io/badge/AI-Groq%20Llama--3.3-blue?style=for-the-badge&logo=google-gemini)
+![Architecture](https://img.shields.io/badge/Architecture-Zero--Knowledge-emerald?style=for-the-badge&logo=vitest)
 
 ---
 
-## 💎 Core Design Principles
+## 💎 The Vestiga Difference
 
-My-Vault has been meticulously crafted to transition from traditional "dark-glassmorphism" security tools to a human-centric, high-trust SaaS interface.
+Vestiga isn't just a vault; it's a proactive security perimeter. We've evolved from traditional password management into a high-trust SaaS platform.
 
-*   **Aesthetic Purity**: A clean, light-themed workspace inspired by Stripe and Linear.
-*   **Information Density**: 8px spacing system designed for high efficiency without visual noise.
-*   **Tactile Feedback**: Subtle micro-animations via Framer Motion for every interaction.
-*   **Security Centric**: Every pixel emphasizes the encrypted nature of the platform (AES-256 indicators, secure field masking).
+*   **🌑 Premium Dark Aesthetics**: A glassmorphism-inspired UI designed for depth, clarity, and focus.
+*   **🧠 Neural Security Layer**: Real-time AI audits powered by Groq to identify password leakage and reuse patterns.
+*   **📱 Universal Synchronization**: Native web application paired with a robust browser extension for seamless autofill.
+*   **🔒 Mathematical Certainty**: Every byte is encrypted client-side using **AES-256-GCM**. We never see your data—only you can.
 
 ---
 
 ## 🚀 Key Features
 
-### 🛡️ Zero-Knowledge Architecture
-All data is encrypted client-side using **AES-256-GCM**. Your master key never leaves your device. We prioritize mathematical certainty over simple trust.
+### 🛡️ Zero-Knowledge Vault
+Initialize your vault with a master password that never leaves your device. PBKDF2 key derivation ensures your primary secret stays local.
 
-### 🧠 AI Security Layer (Powered by Groq)
-Integrated intelligence for real-time security posture analysis:
-*   **AI Security Audit**: Instant reasoning on password entropy and reuse.
-*   **Assistant Chat**: Contextual security advice based on your vault profile.
-*   **Smart Search**: Natural language processing for finding obscure entries.
+### 🧠 AI Security Audits
+Get instant, intelligent reasoning on your security posture. Our AI identifies:
+*   Weak or predictable entropy scores.
+*   High-risk password reuse across critical accounts.
+*   Proactive suggestions for hardening your digital identity.
 
-### 🏗️ Universal Vault Infrastructure
-Support for multi-category secure storage:
-*   **High-Entropy Passwords**: With recursive strength analysis.
-*   **Financial Objects**: Encrypted credit and debit card storage.
-*   **Secure Documents**: AES-256 cloud directory for sensitive files.
-*   **Secure Notes & Identities**: Full address and text encryption.
+### 🧩 Intelligent Browser Extension
+Sync your vault directly with your browser. Features advanced neural form detection and one-click secure autofill without compromising your master key.
 
-### 🧩 Browser Extension Sync
-A synchronized Chrome/Edge extension that brings your vault to the edge of the internet, featuring a matched design system and neural autofill capabilities.
+### 💼 SaaS Infrastructure
+Built for the public web with legal compliance foundations, comprehensive SEO, and dedicated support channels.
 
 ---
 
 ## 🛠️ Technology Stack
 
-*   **Runtime**: [Vite](https://vitejs.dev/) + [React 19](https://reactjs.org/)
-*   **Language**: [TypeScript](https://www.typescriptlang.org/)
-*   **Styling**: [Tailwind CSS 4.0](https://tailwindcss.com/)
-*   **Motion**: [Framer Motion](https://www.framer.com/motion/)
-*   **Icons**: [Lucide Outline](https://lucide.dev/)
-*   **AI Engine**: [Groq API](https://groq.com/) (Llama-3.3-70B & 8B)
+| Component | Technology |
+|---|---|
+| **Core** | React 19 + TypeScript + Vite 7 |
+| **Styling** | Tailwind CSS 4.0 + Framer Motion |
+| **Backend** | Node.js + Express 5 + PostgreSQL |
+| **Auth** | Supabase (E2EE) + Google OAuth |
+| **AI** | Groq API (Llama-3.3-70B) |
 
 ---
 
-## ⚙️ Development Setup
+## ⚙️ Development & Deployment
 
+### 1. Local Setup
 ```bash
-# 1. Clone & Install
+# Clone the repository
+git clone https://github.com/Priyankkhatri/My-Vault.git
+
+# Install dependencies
 npm install
 
-# 2. Environment Configuration
-# Create a .env file and add your Groq API Key
-VITE_GROQ_API_KEY=your_key_here
+# Configure local env
+cp .env.example .env
 
-# 3. Launch Development Server
+# Start the dev server
 npm run dev
-
-# 4. Production Build
-npm run build
 ```
+
+### 2. Production Deployment
+Vestiga is designed for a multi-cloud deployment:
+*   **Frontend**: Hosted on **Vercel** with SPA routing support.
+*   **Backend**: Hosted on **Render** (pointing to the `/server` directory).
+*   **Database**: Managed via **Supabase**.
+
+> [!IMPORTANT]
+> For detailed deployment steps (CORS, Env Vars, Google OAuth), please see the **[Implementation Plan](file:///C:/Users/priya/.gemini/antigravity/brain/ec8dc18d-897d-435d-a420-3122924e7e05/implementation_plan.md)** or follow our guide in the repository's docs.
 
 ---
 
 ## 🔒 Security Assurance
-My-Vault is built as a **human-crafted, high-trust system**. All modifications to the UI/UX have been executed while maintaining strict **Zero-Touch Integrity** of the underlying encryption and AI logic layers.
+Vestiga maintains a **Zero-Touch Integrity** policy. All UI/UX polish is performed in strict isolation from the underlying cryptographic layers. We prioritize mathematical privacy over everything else.
+
+---
+
+## ⚖️ Legal & Support
+Vestiga is built for compliance:
+*   **Privacy Policy**
+*   **Terms of Service**
+*   **Support**: pktimepass01@gmail.com
+
+---
+
+Managed by **Priyank Khatri** | [GitHub](https://github.com/Priyankkhatri)
