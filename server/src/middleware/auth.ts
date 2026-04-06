@@ -3,9 +3,14 @@ import { env } from '../config/env.js';
 import type { Request, Response, NextFunction } from 'express';
 import * as db from '../db/store.js';
 
-// Initialize Supabase client for the backend
-// We use the same public URL/Key to verify the token sent by the client
-const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey);
+// Initialize Supabase client for the backend (server-side configuration)
+const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+    detectSessionInUrl: false,
+  },
+});
 
 export interface AuthPayload {
   userId: string;
