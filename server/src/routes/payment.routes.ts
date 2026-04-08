@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import Razorpay from 'razorpay';
 import { authMiddleware } from '../middleware/auth.js';
 import * as rzp from '../services/razorpay.js';
 import * as db from '../db/store.js';
@@ -6,15 +7,15 @@ import { env } from '../config/env.js';
 
 const router = Router();
 
-/**
- * ─── POST /api/payments/create-subscription ─────────────────────
- * Creates a Razorpay subscription for the authenticated user.
- */
-router.post('/create-subscription', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+async function createSubscriptionHandler(req: Request, res: Response): Promise<void> {
   try {
     const user = req.user!;
-    
-    // Check if user already has a plan (optional, could allow multi)
+
+    if (!env.razorpayPlanId || !env.razorpayKeyId) {
+      res.status(500).json({ success: false, error: 'Razorpay is not configured on the server' });
+      return;
+    }
+
     const localUser = await db.findUserById(user.userId);
     if (localUser?.tier === 'pro') {
       res.json({ success: true, alreadyPro: true });
@@ -28,27 +29,25 @@ router.post('/create-subscription', authMiddleware, async (req: Request, res: Re
       data: {
         subscriptionId: subscription.id,
         keyId: env.razorpayKeyId,
-      }
+      },
     });
   } catch (error) {
     console.error('[Payment Route] Subscription creation failed:', error);
     res.status(500).json({ success: false, error: 'Failed to create subscription' });
   }
-});
+}
 
-/**
- * ─── POST /api/payments/webhook ─────────────────────────────────
- * Handles Razorpay webhook events to upgrade/downgrade user tiers.
- * ⚠️ NO AUTH MIDDLEWARE HERE (Razorpay will call this).
- */
+// Keep both route spellings for compatibility with older deployed frontend bundles.
+router.post('/create-subscription', authMiddleware, createSubscriptionHandler);
+router.post('/create_subscription', authMiddleware, createSubscriptionHandler);
+
 router.post('/webhook', async (req: Request, res: Response): Promise<void> => {
   try {
     const signature = req.headers['x-razorpay-signature'] as string;
     const secret = env.razorpayWebhookSecret;
-    
-    // Verify signature
+
     const isValid = Razorpay.validateWebhookSignature(JSON.stringify(req.body), signature, secret);
-    
+
     if (!isValid) {
       console.warn('[Webhook] Invalid signature received');
       res.status(400).json({ success: false, error: 'Invalid signature' });
@@ -58,7 +57,6 @@ router.post('/webhook', async (req: Request, res: Response): Promise<void> => {
     const { event, payload } = req.body;
     console.log(`[Webhook] Event received: ${event}`);
 
-    // Handle subscription authentication (payment success)
     if (event === 'subscription.authenticated' || event === 'payment.captured') {
       const subscription = payload.subscription?.entity || payload.payment?.entity;
       const email = subscription.notes?.email || payload.payment?.entity?.email;
@@ -79,9 +77,5 @@ router.post('/webhook', async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
-
-// Need to import Razorpay here for static usage in validateWebhookSignature if used directly, 
-// but my service already wraps it partially.
-import Razorpay from 'razorpay';
 
 export default router;

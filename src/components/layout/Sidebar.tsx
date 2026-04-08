@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Lock, ShieldCheck, Settings, LogOut, User, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { startProCheckout } from '../../services/paymentService';
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -15,45 +16,27 @@ interface SidebarProps {
 }
 
 export function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
-  const { signOut, user, tier, itemCount, refreshProfile, session } = useAuth();
+  const { signOut, user, tier, itemCount, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   const handleUpgrade = async () => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${baseUrl}/payments/create-subscription`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`
-        }
+      const result = await startProCheckout({
+        email: user?.email,
+        onSuccess: async (response) => {
+          console.log('[Razorpay] Payment Success:', response);
+          await refreshProfile();
+          alert('Welcome to Vestiga Pro! Your account has been upgraded.');
+        },
       });
-      const result = await response.json();
 
       if (result.alreadyPro) {
         alert('You are already a Pro member!');
         return;
       }
-
-      const options = {
-        key: result.data.keyId,
-        subscription_id: result.data.subscriptionId,
-        name: 'Vestiga Pro',
-        description: 'Monthly Subscription',
-        handler: async function (response: any) {
-          console.log('[Razorpay] Payment Success:', response);
-          await refreshProfile();
-          alert('Welcome to Vestiga Pro! Your account has been upgraded.');
-        },
-        theme: {
-          color: '#0d9488',
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (err) {
+    } catch (err: any) {
       console.error('[Sidebar] Upgrade error:', err);
-      alert('Failed to start checkout. Please try again.');
+      alert(err?.message || 'Failed to start checkout. Please try again.');
     }
   };
 

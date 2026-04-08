@@ -6,44 +6,32 @@ import { PasswordItem } from '../types/vault';
 import React from 'react';
 import { X, ArrowRight, ShieldCheck, Activity, FolderLock, ShieldAlert, KeyRound, Clock, AlertTriangle } from 'lucide-react';
 import { calculatePasswordStrength, findReusedPasswordsSync, calculateSecurityScore } from '../utils/securityUtils';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import { startProCheckout } from '../services/paymentService';
 
 export function Dashboard() {
   const { items } = useVault();
-  const { tier, itemCount, refreshProfile, session } = useAuth();
-  const navigate = useNavigate();
+  const { tier, itemCount, refreshProfile, user } = useAuth();
   const [showBanner, setShowBanner] = React.useState(true);
 
   const handleUpgrade = async () => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://vestiga-api.onrender.com/api';
-      const response = await fetch(`${baseUrl}/payments/create-subscription`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`
-        }
-      });
-      const result = await response.json();
-
-      const options = {
-        key: result.data.keyId,
-        subscription_id: result.data.subscriptionId,
-        name: 'Vestiga Pro',
-        description: 'Monthly Subscription',
-        handler: async function (response: any) {
+      const result = await startProCheckout({
+        email: user?.email,
+        onSuccess: async () => {
           await refreshProfile();
           alert('Welcome to Vestiga Pro! Your account has been upgraded.');
         },
-        theme: { color: '#0d9488' },
-      };
+      });
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (err) {
+      if (result.alreadyPro) {
+        alert('You are already a Pro member!');
+      }
+    } catch (err: any) {
       console.error('[Dashboard] Upgrade error:', err);
-      alert('Failed to start checkout. Please try again.');
+      alert(err?.message || 'Failed to start checkout. Please try again.');
     }
   };
 

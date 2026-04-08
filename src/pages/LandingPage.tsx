@@ -8,6 +8,7 @@ import {
   Menu, X, ExternalLink, User as UserIcon, LogOut, Settings as SettingsIcon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { startProCheckout } from '../services/paymentService';
 
 // ─── Data ────────────────────────────────────────────────────────
 
@@ -638,49 +639,28 @@ function HowItWorks() {
 }
 
 function PricingSection() {
-  const { user, tier, session, refreshProfile } = useAuth();
+  const { user, tier, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   const handleUpgrade = async () => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${baseUrl}/payments/create-subscription`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`
-        }
-      });
-      const result = await response.json();
-
-      if (result.alreadyPro) {
-        alert('You are already a Pro member!');
-        return;
-      }
-
-      const options = {
-        key: result.data.keyId,
-        subscription_id: result.data.subscriptionId,
-        name: 'Vestiga Pro',
-        description: 'Monthly Subscription',
-        handler: async function (response: any) {
+      const result = await startProCheckout({
+        email: user?.email,
+        onSuccess: async (response) => {
           console.log('[Razorpay] Payment Success:', response);
           await refreshProfile();
           alert('Welcome to Vestiga Pro! Your account has been upgraded.');
           navigate('/dashboard');
         },
-        prefill: {
-          email: user?.email,
-        },
-        theme: {
-          color: '#0d9488',
-        },
-      };
+      });
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (err) {
+      if (result.alreadyPro) {
+        alert('You are already a Pro member!');
+        return;
+      }
+    } catch (err: any) {
       console.error('[Pricing] Upgrade error:', err);
-      alert('Failed to start checkout. Please try again.');
+      alert(err?.message || 'Failed to start checkout. Please try again.');
     }
   };
 
@@ -753,9 +733,12 @@ function PricingSection() {
                 AI Security Audits
               </li>
             </ul>
-            <Link to="/signup" className="block w-full text-center py-3 px-6 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors">
-              Get Started Free
-            </Link>
+            <button
+              onClick={() => handleAction('Basic')}
+              className="block w-full text-center py-3 px-6 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              {user ? 'Go to Dashboard' : 'Get Started Free'}
+            </button>
           </div>
 
           {/* Pro Tier */}
@@ -792,9 +775,12 @@ function PricingSection() {
                 Priority Support
               </li>
             </ul>
-            <Link to="/signup" className="block w-full text-center py-3 px-6 rounded-xl font-semibold text-white bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 active:scale-[0.98] transition-all">
-              Upgrade to Pro
-            </Link>
+            <button
+              onClick={() => handleAction('Pro')}
+              className="block w-full text-center py-3 px-6 rounded-xl font-semibold text-white bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 active:scale-[0.98] transition-all"
+            >
+              {!user ? 'Upgrade to Pro' : tier === 'pro' ? 'Go to Dashboard' : 'Upgrade to Pro'}
+            </button>
           </div>
 
         </div>
