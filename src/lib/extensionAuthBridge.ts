@@ -90,16 +90,11 @@ export function broadcastSessionToExtension(session: Session | null) {
     return;
   }
 
-  const serialized = serializeSession(session);
-  if (!serialized) {
-    return;
-  }
-
   window.postMessage(
     {
       source: WEBAPP_SOURCE,
       type: WEBAPP_AUTH_CHANGED,
-      session: serialized,
+      session: serializeSession(session),
     },
     window.location.origin,
   );

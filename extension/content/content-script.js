@@ -108,6 +108,13 @@
     });
   }
 
+  async function clearExtensionSession() {
+    return sendRuntimeMessage({
+      type: "AUTH",
+      action: "signOut"
+    });
+  }
+
   window.addEventListener("message", (event) => {
     if (event.source !== window) return;
 
@@ -115,15 +122,23 @@
     if (
       !data ||
       data.source !== WEBAPP_SOURCE ||
-      data.type !== WEBAPP_AUTH_CHANGED ||
-      !isSessionPayload(data.session)
+      data.type !== WEBAPP_AUTH_CHANGED
     ) {
       return;
     }
 
-    importWebAppSession(data.session).catch((error) => {
-      console.warn("[Vestiga] Failed to import web app session:", error);
-    });
+    if (isSessionPayload(data.session)) {
+      importWebAppSession(data.session).catch((error) => {
+        console.warn("[Vestiga] Failed to import web app session:", error);
+      });
+      return;
+    }
+
+    if (data.session === null) {
+      clearExtensionSession().catch((error) => {
+        console.warn("[Vestiga] Failed to clear extension session:", error);
+      });
+    }
   });
 
   /**
