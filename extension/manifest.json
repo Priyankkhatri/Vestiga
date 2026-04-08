@@ -25,7 +25,13 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content/autofill-ui.css"],
+      "resources": [
+        "content/autofill-ui.css",
+        "assets/icon16.png",
+        "assets/icon32.png",
+        "assets/icon48.png",
+        "assets/icon128.png"
+      ],
       "matches": ["<all_urls>"]
     }
   ],

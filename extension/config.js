@@ -6,6 +6,10 @@
  */
 
 const CONFIG = {
+  // Primary Vestiga web app URL used for popup links and active-tab sync.
+  // For local development, change this to "http://localhost:5173".
+  APP_URL: "https://vestiga.vercel.app",
+
   // Supabase URL: find this in your Supabase project settings (API section)
   SUPABASE_URL: "https://lvodmlfhbchogmkdgooy.supabase.co",
 

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { VaultProvider } from './context/VaultContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MasterPasswordProvider } from './context/MasterPasswordContext';
+import { ExtensionVaultBridge } from './components/extension/ExtensionVaultBridge';
 import { AppLayout } from './components/layout/AppLayout';
 import { CommandPalette } from './features/search/CommandPalette';
 import { Toaster } from 'react-hot-toast';
@@ -40,6 +41,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 function AuthenticatedRoutes() {
   return (
     <>
+      <ExtensionVaultBridge />
       <AppLayout>
         <AnimatePresence mode="wait">
           <Suspense fallback={<LoadingScreen />}>

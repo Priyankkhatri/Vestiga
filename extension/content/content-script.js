@@ -17,6 +17,8 @@
   const WEBAPP_AUTH_REQUEST = "VESTIGA_AUTH_SESSION_REQUEST";
   const WEBAPP_AUTH_RESPONSE = "VESTIGA_AUTH_SESSION_RESPONSE";
   const WEBAPP_AUTH_CHANGED = "VESTIGA_AUTH_SESSION_CHANGED";
+  const WEBAPP_VAULT_REQUEST = "VESTIGA_VAULT_STATE_REQUEST";
+  const WEBAPP_VAULT_RESPONSE = "VESTIGA_VAULT_STATE_RESPONSE";
 
   function isSessionPayload(value) {
     return Boolean(
@@ -43,6 +45,15 @@
 
   function createRequestId() {
     return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  function isVaultPayload(value) {
+    return Boolean(
+      value &&
+      typeof value === "object" &&
+      typeof value.userId === "string" &&
+      Array.isArray(value.items)
+    );
   }
 
   function requestSessionFromWebApp() {
@@ -89,6 +100,57 @@
         {
           source: EXTENSION_SOURCE,
           type: WEBAPP_AUTH_REQUEST,
+          requestId
+        },
+        window.location.origin
+      );
+    });
+  }
+
+  function requestVaultStateFromWebApp() {
+    if (!/^https?:$/.test(window.location.protocol)) {
+      return Promise.resolve(null);
+    }
+
+    return new Promise((resolve) => {
+      const requestId = createRequestId();
+      let settled = false;
+
+      const cleanup = () => {
+        settled = true;
+        clearTimeout(timeoutId);
+        window.removeEventListener("message", handleMessage);
+      };
+
+      const finish = (payload) => {
+        if (settled) return;
+        cleanup();
+        resolve(payload);
+      };
+
+      const handleMessage = (event) => {
+        if (event.source !== window) return;
+
+        const data = event.data;
+        if (
+          !data ||
+          data.source !== WEBAPP_SOURCE ||
+          data.type !== WEBAPP_VAULT_RESPONSE ||
+          data.requestId !== requestId
+        ) {
+          return;
+        }
+
+        finish(isVaultPayload(data.payload) ? data.payload : null);
+      };
+
+      const timeoutId = setTimeout(() => finish(null), 1500);
+
+      window.addEventListener("message", handleMessage);
+      window.postMessage(
+        {
+          source: EXTENSION_SOURCE,
+          type: WEBAPP_VAULT_REQUEST,
           requestId
         },
         window.location.origin
@@ -235,6 +297,23 @@
         })
         .catch((error) => {
           sendResponse({ success: false, error: error.message || "Session sync failed" });
+        });
+
+      return true;
+    }
+
+    if (message && message.type === "WEBAPP_VAULT_REQUEST") {
+      requestVaultStateFromWebApp()
+        .then((payload) => {
+          if (!payload) {
+            sendResponse({ success: false, error: "No unlocked web app vault found" });
+            return;
+          }
+
+          sendResponse({ success: true, data: payload });
+        })
+        .catch((error) => {
+          sendResponse({ success: false, error: error.message || "Vault sync failed" });
         });
 
       return true;

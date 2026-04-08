@@ -3,9 +3,11 @@ import type { Session } from '@supabase/supabase-js';
 export const EXTENSION_AUTH_REQUEST = 'VESTIGA_AUTH_SESSION_REQUEST';
 export const WEBAPP_AUTH_RESPONSE = 'VESTIGA_AUTH_SESSION_RESPONSE';
 export const WEBAPP_AUTH_CHANGED = 'VESTIGA_AUTH_SESSION_CHANGED';
+export const EXTENSION_VAULT_REQUEST = 'VESTIGA_VAULT_STATE_REQUEST';
+export const WEBAPP_VAULT_RESPONSE = 'VESTIGA_VAULT_STATE_RESPONSE';
 
-const EXTENSION_SOURCE = 'vestiga-extension';
-const WEBAPP_SOURCE = 'vestiga-webapp';
+export const EXTENSION_SOURCE = 'vestiga-extension';
+export const WEBAPP_SOURCE = 'vestiga-webapp';
 
 export interface ExtensionSessionPayload {
   access_token: string;

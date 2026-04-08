@@ -24,12 +24,57 @@ function queryTabs(queryInfo) {
   });
 }
 
+function getConfiguredWebAppOrigin() {
+  var fallbackUrl = "https://vestiga.vercel.app";
+  var rawUrl = fallbackUrl;
+
+  if (typeof CONFIG !== "undefined") {
+    if (typeof CONFIG.APP_URL === "string" && CONFIG.APP_URL) {
+      rawUrl = CONFIG.APP_URL;
+    } else if (typeof CONFIG.API_URL === "string" && CONFIG.API_URL) {
+      try {
+        var derived = new URL(CONFIG.API_URL);
+        if (derived.pathname.indexOf("/api") === 0) {
+          derived.pathname = derived.pathname.replace(/^\/api\/?/, "/");
+        }
+        if (
+          (derived.hostname === "localhost" || derived.hostname === "127.0.0.1")
+          && derived.port === "3001"
+        ) {
+          derived.port = "5173";
+        }
+        rawUrl = derived.toString();
+      } catch (_) {
+        rawUrl = fallbackUrl;
+      }
+    }
+  }
+
+  try {
+    return new URL(rawUrl).origin;
+  } catch (_) {
+    return new URL(fallbackUrl).origin;
+  }
+}
+
+function isVestigaWebAppTab(tabUrl) {
+  if (!tabUrl || !/^https?:/i.test(tabUrl)) {
+    return false;
+  }
+
+  try {
+    return new URL(tabUrl).origin === getConfiguredWebAppOrigin();
+  } catch (_) {
+    return false;
+  }
+}
+
 async function syncSessionFromTabs() {
   var tabs = await queryTabs({});
 
   for (var i = 0; i < tabs.length; i++) {
     var tab = tabs[i];
-    if (!tab || !tab.id || !tab.url || !/^https?:/i.test(tab.url)) {
+    if (!tab || !tab.id || !isVestigaWebAppTab(tab.url)) {
       continue;
     }
 
@@ -44,6 +89,31 @@ async function syncSessionFromTabs() {
   }
 
   return { success: false, error: "No signed-in Vestiga web app tab found" };
+}
+
+async function getUnlockedVaultFromActiveTab(expectedUserId) {
+  var tabs = await queryTabs({ active: true, currentWindow: true });
+  var activeTab = tabs && tabs[0];
+  if (!activeTab || !activeTab.id || !isVestigaWebAppTab(activeTab.url)) {
+    return { success: false, error: "Active tab is not the Vestiga web app" };
+  }
+
+  try {
+    var result = await sendTabMessage(activeTab.id, { type: "WEBAPP_VAULT_REQUEST" });
+    if (
+      result &&
+      result.success &&
+      result.data &&
+      result.data.userId === expectedUserId &&
+      Array.isArray(result.data.items)
+    ) {
+      return result;
+    }
+  } catch (_) {
+    // Ignore tabs that do not expose the unlocked vault bridge.
+  }
+
+  return { success: false, error: "No unlocked Vestiga web app tab found" };
 }
 
 var handleMessage = async function (request) {
@@ -107,13 +177,30 @@ var handleMessage = async function (request) {
           // Check if master key is set in memory + if user has set up encryption
           var isSet = self.authService.isMasterKeySet();
           if (isSet) {
-            return { success: true, data: { isSet: true, needsSetup: false } };
+            return {
+              success: true,
+              data: { isSet: true, needsSetup: false, source: "extension" }
+            };
           }
 
           // Check if user has encryption meta in Supabase
           var sesh = await self.authService.getSession();
           if (!sesh) {
             return { success: false, error: "Not authenticated" };
+          }
+
+          var bridgedVault = await getUnlockedVaultFromActiveTab(sesh.user.id);
+          if (bridgedVault.success && bridgedVault.data) {
+            return {
+              success: true,
+              data: {
+                isSet: false,
+                needsSetup: false,
+                source: "webapp",
+                items: bridgedVault.data.items,
+                isLoading: Boolean(bridgedVault.data.isLoading)
+              }
+            };
           }
 
           var metaPath = "/rest/v1/user_encryption_meta"
@@ -124,7 +211,11 @@ var handleMessage = async function (request) {
           var hasSetup = metaResult.data && metaResult.data.length > 0;
           return {
             success: true,
-            data: { isSet: false, needsSetup: !hasSetup }
+            data: {
+              isSet: false,
+              needsSetup: !hasSetup,
+              source: hasSetup ? "locked" : "setup"
+            }
           };
         }
 

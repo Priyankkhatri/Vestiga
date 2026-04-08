@@ -1,7 +1,7 @@
 /**
  * popup.js
  * Main popup orchestrator with 3-state flow:
- *   Login → Master Password → Vault
+ *   Login -> Master Password -> Vault
  *
  * Handles Supabase auth, master password unlock/setup,
  * vault rendering, search, and autofill.
@@ -10,12 +10,13 @@
 (function () {
   "use strict";
 
-  // ─── State ───
+  // State
   var vaultItems = [];
   var currentUser = null;
   var masterPwMode = "unlock"; // "setup" or "unlock"
+  var webAppVaultPollTimer = null;
 
-  // ─── Helpers ───
+  // Helpers
 
   function sendMessage(msg) {
     return new Promise(function (resolve, reject) {
@@ -48,9 +49,53 @@
     }
   }
 
-  // ─── Screen Control ───
+  function clearWebAppPollTimer() {
+    if (webAppVaultPollTimer) {
+      clearTimeout(webAppVaultPollTimer);
+      webAppVaultPollTimer = null;
+    }
+  }
+
+  function getWebAppBaseUrl() {
+    if (typeof CONFIG !== "undefined" && typeof CONFIG.APP_URL === "string" && CONFIG.APP_URL) {
+      return CONFIG.APP_URL.replace(/\/+$/, "");
+    }
+
+    var apiUrl = typeof CONFIG !== "undefined" && typeof CONFIG.API_URL === "string"
+      ? CONFIG.API_URL
+      : "";
+
+    if (apiUrl) {
+      try {
+        var derivedUrl = new URL(apiUrl);
+        if (derivedUrl.pathname.indexOf("/api") === 0) {
+          derivedUrl.pathname = derivedUrl.pathname.replace(/^\/api\/?/, "/");
+        }
+        if (
+          (derivedUrl.hostname === "localhost" || derivedUrl.hostname === "127.0.0.1")
+          && derivedUrl.port === "3001"
+        ) {
+          derivedUrl.port = "5173";
+        }
+        return derivedUrl.toString().replace(/\/+$/, "");
+      } catch (_) {}
+    }
+
+    return "https://vestiga.vercel.app";
+  }
+
+  function buildWebAppUrl(pathname) {
+    var baseUrl = getWebAppBaseUrl();
+    if (!pathname) {
+      return baseUrl;
+    }
+    return baseUrl + (pathname.charAt(0) === "/" ? pathname : "/" + pathname);
+  }
+
+  // Screen Control
 
   function showLoginScreen() {
+    clearWebAppPollTimer();
     document.getElementById("login-screen").classList.remove("hidden");
     document.getElementById("master-pw-screen").classList.add("hidden");
     document.getElementById("vault-view").classList.add("hidden");
@@ -60,6 +105,7 @@
   }
 
   function showMasterPwScreen(mode) {
+    clearWebAppPollTimer();
     masterPwMode = mode;
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("master-pw-screen").classList.remove("hidden");
@@ -104,7 +150,7 @@
     window.SearchView.clear();
   }
 
-  // ─── Auth Flow ───
+  // Auth Flow
 
   async function syncSessionFromWebApp() {
     try {
@@ -126,7 +172,6 @@
       var res = await sendMessage({ type: "AUTH", action: "getSession" });
       if (res && res.success && res.data && res.data.user) {
         currentUser = res.data.user;
-        // Check master key status
         await checkMasterKeyStatus();
         return;
       }
@@ -142,24 +187,47 @@
     showLoginScreen();
   }
 
-  async function checkMasterKeyStatus() {
+  async function checkMasterKeyStatus(pollCount) {
+    pollCount = typeof pollCount === "number" ? pollCount : 0;
+
     try {
       var res = await sendMessage({ type: "MASTER_KEY", action: "status" });
       if (res && res.success && res.data) {
         if (res.data.isSet) {
-          // Master key is in memory — go straight to vault
+          clearWebAppPollTimer();
           showVaultView(currentUser);
           await fetchVault();
-        } else if (res.data.needsSetup) {
-          // First time — show setup screen
-          showMasterPwScreen("setup");
-        } else {
-          // Key expired/cleared — show unlock screen
-          showMasterPwScreen("unlock");
+          return;
         }
-      } else {
+
+        if (res.data.source === "webapp") {
+          showVaultView(currentUser);
+
+          if (res.data.isLoading && pollCount < 8) {
+            window.ItemList.showLoading();
+            clearWebAppPollTimer();
+            webAppVaultPollTimer = setTimeout(function () {
+              checkMasterKeyStatus(pollCount + 1);
+            }, 250);
+            return;
+          }
+
+          clearWebAppPollTimer();
+          vaultItems = Array.isArray(res.data.items) ? res.data.items : [];
+          await renderCurrentItems();
+          return;
+        }
+
+        if (res.data.needsSetup) {
+          showMasterPwScreen("setup");
+          return;
+        }
+
         showMasterPwScreen("unlock");
+        return;
       }
+
+      showMasterPwScreen("unlock");
     } catch (err) {
       console.error("[Popup] Master key status check failed:", err);
       showMasterPwScreen("unlock");
@@ -188,7 +256,7 @@
 
     errorEl.classList.add("hidden");
     btn.disabled = true;
-    btn.textContent = "Signing in…";
+    btn.textContent = "Signing in...";
 
     try {
       var res = await sendMessage({
@@ -205,14 +273,14 @@
         errorEl.textContent = (res && res.error) || "Sign in failed. Check your credentials.";
         errorEl.classList.remove("hidden");
         errorEl.classList.remove("animate-shake");
-        void errorEl.offsetWidth; // trigger reflow
+        void errorEl.offsetWidth;
         errorEl.classList.add("animate-shake");
       }
     } catch (err) {
       errorEl.textContent = err.message || "Sign in failed.";
       errorEl.classList.remove("hidden");
       errorEl.classList.remove("animate-shake");
-      void errorEl.offsetWidth; // trigger reflow
+      void errorEl.offsetWidth;
       errorEl.classList.add("animate-shake");
     } finally {
       btn.disabled = false;
@@ -241,7 +309,7 @@
       .catch(function (err) { console.error("[Popup] Lock failed:", err); });
   }
 
-  // ─── Master Password Flow ───
+  // Master Password Flow
 
   async function handleMasterPwSubmit() {
     var pwInput = document.getElementById("master-pw-input");
@@ -286,20 +354,19 @@
       if (res && res.success) {
         showToast(masterPwMode === "setup" ? "Vault encrypted!" : "Vault unlocked!", "success");
         showVaultView(currentUser);
-        // Added a tiny delay for skeleton feel
-        setTimeout(() => fetchVault(), 100);
+        setTimeout(function () { fetchVault(); }, 100);
       } else {
         errorEl.textContent = (res && res.error) || "Failed. Please try again.";
         errorEl.classList.remove("hidden");
         errorEl.classList.remove("animate-shake");
-        void errorEl.offsetWidth; // trigger reflow
+        void errorEl.offsetWidth;
         errorEl.classList.add("animate-shake");
       }
     } catch (err) {
       errorEl.textContent = err.message || "Operation failed.";
       errorEl.classList.remove("hidden");
       errorEl.classList.remove("animate-shake");
-      void errorEl.offsetWidth; // trigger reflow
+      void errorEl.offsetWidth;
       errorEl.classList.add("animate-shake");
     } finally {
       btn.disabled = false;
@@ -307,17 +374,18 @@
     }
   }
 
-  // ─── Vault Data ───
+  // Vault Data
 
   async function fetchVault() {
     window.ItemList.showLoading();
 
     try {
-      // Minimum duration for skeletons to avoid flicker
-      const startTime = Date.now();
+      var startTime = Date.now();
       var res = await sendMessage({ type: "VAULT", action: "getAll" });
-      const duration = Date.now() - startTime;
-      if (duration < 400) await new Promise(r => setTimeout(r, 400 - duration));
+      var duration = Date.now() - startTime;
+      if (duration < 400) {
+        await new Promise(function (resolve) { setTimeout(resolve, 400 - duration); });
+      }
 
       vaultItems = (res && res.success && Array.isArray(res.data)) ? res.data : [];
     } catch (err) {
@@ -332,14 +400,13 @@
     query = query || "";
     var items = vaultItems;
 
-    // Domain matching
     var currentDomain = "";
     try {
       var tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tabs[0] && tabs[0].url && tabs[0].url.startsWith("http")) {
         currentDomain = new URL(tabs[0].url).hostname.replace(/^www\./, "").toLowerCase();
       }
-    } catch(e) {}
+    } catch (_) {}
 
     if (query) {
       items = vaultItems.filter(function (item) {
@@ -348,8 +415,7 @@
                (item.url || "").toLowerCase().includes(query);
       });
     } else if (currentDomain) {
-      // Sort matches to top
-      items = vaultItems.slice().sort(function(a, b) {
+      items = vaultItems.slice().sort(function (a, b) {
         var aUrl = (a.url || "").toLowerCase();
         var bUrl = (b.url || "").toLowerCase();
         var aMatch = aUrl.includes(currentDomain) ? 1 : 0;
@@ -358,23 +424,22 @@
       });
     }
 
-    var mappedItems = items.map(function(item) {
-      // Create a shallow copy so we can attach a transient isSuggested flag
-      var i = Object.assign({}, item);
-      if (currentDomain && !query && (i.url || "").toLowerCase().includes(currentDomain)) {
-        i.isSuggested = true;
+    var mappedItems = items.map(function (item) {
+      var copy = Object.assign({}, item);
+      if (currentDomain && !query && (copy.url || "").toLowerCase().includes(currentDomain)) {
+        copy.isSuggested = true;
       }
-      return i;
+      return copy;
     });
 
     window.ItemList.render(mappedItems, {
       onCopyUsername: function (val) { copyToClipboard(val, "Username copied"); },
       onCopyPassword: function (val) { copyToClipboard(val, "Password copied"); },
-      onAutofill: function (item) { handleAutofill(item); },
+      onAutofill: function (item) { handleAutofill(item); }
     });
   }
 
-  // ─── Autofill ───
+  // Autofill
 
   async function handleAutofill(item) {
     try {
@@ -404,7 +469,7 @@
     }
   }
 
-  // ─── Init Components ───
+  // Init Components
 
   window.LockScreen.init({
     onSignIn: handleSignIn
@@ -418,8 +483,7 @@
     onSignOut: handleSignOut,
     onLock: handleLock,
     onDashboard: function () {
-      var dashUrl = (typeof CONFIG !== 'undefined' ? CONFIG.API_URL : '').replace('/api', '').replace(':3001', ':5173');
-      chrome.tabs.create({ url: dashUrl || "http://localhost:5174" });
+      chrome.tabs.create({ url: buildWebAppUrl("/dashboard") });
     }
   });
 
@@ -445,16 +509,14 @@
   });
 
   document.getElementById("btn-toggle-master-pw").addEventListener("click", function () {
-    var inp = document.getElementById("master-pw-input");
-    inp.type = inp.type === "password" ? "text" : "password";
+    var input = document.getElementById("master-pw-input");
+    input.type = input.type === "password" ? "text" : "password";
   });
 
-  // ─── Boot ───
-  if (typeof CONFIG !== 'undefined') {
-    var signupEl = document.getElementById("btn-signup-link");
-    if (signupEl) {
-      signupEl.href = CONFIG.API_URL.replace('/api', '').replace(':3001', ':5173') + '/signup';
-    }
+  // Boot
+  var signupEl = document.getElementById("btn-signup-link");
+  if (signupEl) {
+    signupEl.href = buildWebAppUrl("/login");
   }
 
   checkAuthStatus();
