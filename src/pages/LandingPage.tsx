@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { startProCheckout } from '../services/paymentService';
+import { BrandLockup, BrandMark } from '../components/common/Brand';
 
 // ─── Data ────────────────────────────────────────────────────────
 
@@ -147,11 +148,11 @@ function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center shadow-md">
-            <ShieldCheck size={18} className="text-white" />
-          </div>
-          <span className="text-xl font-bold text-gray-900 tracking-tight">Vestiga</span>
+        <Link to="/" className="group">
+          <BrandLockup
+            markClassName="h-8 w-8"
+            textClassName="text-xl font-bold text-gray-900 tracking-tight"
+          />
         </Link>
 
         {/* Desktop Links */}
@@ -854,9 +855,7 @@ function CTASection() {
           className="bg-gray-900 rounded-3xl p-12 sm:p-16 text-center relative overflow-hidden shadow-2xl"
         >
           <div className="relative z-10 text-white">
-            <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-teal-500/20">
-              <ShieldCheck size={32} className="text-white" />
-            </div>
+            <BrandMark className="w-16 h-16 mx-auto mb-8" />
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Ready to secure your digital life?
             </h2>
@@ -905,12 +904,11 @@ function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center shadow-sm">
-                <ShieldCheck size={18} className="text-white" />
-              </div>
-              <span className="text-lg font-bold text-gray-900">Vestiga</span>
-            </div>
+            <BrandLockup
+              className="mb-4"
+              markClassName="h-8 w-8"
+              textClassName="text-lg font-bold text-gray-900"
+            />
             <p className="text-sm text-gray-500 leading-relaxed">
               Zero-knowledge, end-to-end encrypted password manager. Your passwords deserve a fortress.
             </p>

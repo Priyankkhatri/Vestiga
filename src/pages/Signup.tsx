@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { BrandMark } from '../components/common/Brand';
 
 function GoogleIcon() {
   return (
@@ -88,9 +89,7 @@ export function Signup() {
       >
         <div className="flex flex-col items-center mb-8">
           <Link to="/" className="mb-6">
-            <div className="w-16 h-16 bg-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20">
-              <Sparkles size={32} className="text-white" />
-            </div>
+            <BrandMark className="w-16 h-16" />
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Create your Vault</h1>
           <p className="text-sm font-medium text-gray-500 mt-2">Initialize your secure perimeter with Vestiga</p>

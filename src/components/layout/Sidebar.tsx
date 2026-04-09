@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Lock, ShieldCheck, Settings, LogOut, User, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { startProCheckout } from '../../services/paymentService';
+import { BrandLockup } from '../common/Brand';
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -63,12 +64,10 @@ export function Sidebar({ mobileOpen, setMobileOpen }: SidebarProps) {
       >
         {/* Brand & Mobile Close */}
         <div className="h-16 flex items-center justify-between gap-2.5 px-6 shrink-0 border-b border-gray-100 md:border-b-0 md:mt-2">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-teal-600 rounded-md flex items-center justify-center shadow-sm">
-              <ShieldCheck size={16} className="text-white" />
-            </div>
-            <span className="text-[15px] font-bold text-gray-900 tracking-tight">Vestiga</span>
-          </div>
+          <BrandLockup
+            markClassName="h-7 w-7"
+            textClassName="text-[15px] font-bold text-gray-900 tracking-tight"
+          />
           <button 
             className="md:hidden p-1.5 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
             onClick={() => setMobileOpen(false)}

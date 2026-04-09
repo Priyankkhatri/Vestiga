@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ArrowLeft, Mail, Github, Send, MessageSquare, Bug, HelpCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mail, Github, Send, MessageSquare, Bug, HelpCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { BrandLockup } from '../components/common/Brand';
 
 export function Contact() {
   const [name, setName] = useState('');
@@ -40,11 +41,11 @@ export function Contact() {
       {/* Navbar Mini */}
       <nav className="glass-nav fixed top-0 left-0 right-0 z-50 shadow-2xl shadow-black/20">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-teal-500/25">
-              <ShieldCheck size={18} className="text-white" />
-            </div>
-            <span className="text-lg font-bold text-white tracking-tight">Vestiga</span>
+          <Link to="/" className="group">
+            <BrandLockup
+              markClassName="h-8 w-8"
+              textClassName="text-lg font-bold text-white tracking-tight"
+            />
           </Link>
           <Link to="/" className="text-sm font-medium text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1.5">
             <ArrowLeft size={14} /> Back to Home

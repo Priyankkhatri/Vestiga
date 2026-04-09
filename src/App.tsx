@@ -28,7 +28,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
   
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <LoadingScreen />;
   }
   
   if (!session) {
@@ -69,7 +69,7 @@ function AppRoutes() {
   const { session, loading } = useAuth();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <LoadingScreen />;
   }
 
   return (

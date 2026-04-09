@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { BrandMark } from '../components/common/Brand';
 
 function GoogleIcon() {
   return (
@@ -82,9 +83,7 @@ export function Login() {
       >
         <div className="flex flex-col items-center mb-8">
           <Link to="/" className="mb-6">
-            <div className="w-16 h-16 bg-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20">
-              <ShieldCheck size={32} className="text-white" />
-            </div>
+            <BrandMark className="w-16 h-16" />
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome to Vestiga</h1>
           <p className="text-sm font-medium text-gray-500 mt-2">Sign in to your secure vault</p>

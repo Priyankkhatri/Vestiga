@@ -11,7 +11,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Lock, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { BrandMark } from '../common/Brand';
 
 interface Props {
   mode: 'setup' | 'unlock';
@@ -59,13 +60,7 @@ export function MasterPasswordModal({ mode, error, isLoading, onSetup, onUnlock 
         <div className={`bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden ${error && !isLoading ? 'animate-shake' : ''}`}>
           {/* Header */}
           <div className="px-8 pt-10 pb-2 flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/25 mb-6">
-              {mode === 'setup' ? (
-                <ShieldCheck size={32} className="text-white" />
-              ) : (
-                <Lock size={32} className="text-white" />
-              )}
-            </div>
+            <BrandMark className="w-16 h-16 mb-6" />
 
             <h2 className="text-xl font-bold text-gray-900 tracking-tight">
               {mode === 'setup' ? 'Create Master Password' : 'Unlock Vault'}

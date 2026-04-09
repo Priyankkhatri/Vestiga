@@ -5,8 +5,9 @@ import {
   broadcastSessionToExtension,
   registerExtensionAuthBridge,
 } from '../lib/extensionAuthBridge';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BrandMark } from '../components/common/Brand';
 
 interface AuthContextType {
   session: Session | null;
@@ -120,9 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center"
           >
-            <div className="w-16 h-16 bg-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20 mb-6">
-              <ShieldCheck size={32} className="text-white" />
-            </div>
+            <BrandMark className="w-16 h-16 mb-6" />
             <div className="flex items-center gap-3 text-teal-600 font-semibold uppercase tracking-widest text-xs">
               <Loader2 size={16} className="animate-spin" />
               Initializing Vestiga

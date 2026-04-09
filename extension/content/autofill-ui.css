@@ -36,7 +36,14 @@
   letter-spacing: 0.4px;
 }
 
-.mv-dropdown-header svg {
+.mv-brand-icon {
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+}
+
+.mv-dropdown-header svg,
+.mv-dropdown-header .mv-brand-icon {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
@@ -143,7 +150,8 @@
   font-weight: 600;
 }
 
-.mv-save-header svg {
+.mv-save-header svg,
+.mv-save-header .mv-brand-icon {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
