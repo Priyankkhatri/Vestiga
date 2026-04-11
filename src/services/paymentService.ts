@@ -46,9 +46,23 @@ interface StartProCheckoutOptions {
   onSuccess?: (response: RazorpaySuccessResponse) => void | Promise<void>;
 }
 
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && window.Razorpay) {
+      return resolve(true);
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 export async function startProCheckout(options: StartProCheckoutOptions = {}) {
-  if (typeof window === 'undefined' || typeof window.Razorpay !== 'function') {
-    throw new Error('Razorpay checkout failed to load. Please refresh and try again.');
+  const isLoaded = await loadRazorpayScript();
+  if (!isLoaded || typeof window === 'undefined' || typeof window.Razorpay !== 'function') {
+    throw new Error('Razorpay checkout failed to load. Please check your connection and try again.');
   }
 
   const result = await api.post<CreateSubscriptionData>('/payments/create-subscription') as CreateSubscriptionResult;
