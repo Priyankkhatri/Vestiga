@@ -1,0 +1,21 @@
+User-agent: *
+
+# Allow Public Routes
+Allow: /$
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+
+# Disallow Protected & Auth Routes
+Disallow: /dashboard
+Disallow: /vault
+Disallow: /item/
+Disallow: /add
+Disallow: /security
+Disallow: /settings
+Disallow: /login
+Disallow: /signup
+Disallow: /api/
+
+# Sitemap Location
+Sitemap: https://vestiga.vercel.app/sitemap.xml
