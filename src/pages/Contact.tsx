@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Mail, Github, Send, MessageSquare, Bug, HelpCircle, Loader2 } from 'lucide-react';
@@ -38,6 +39,11 @@ export function Contact() {
 
   return (
     <div className="bg-[#0A0F1C] min-h-screen">
+      <Helmet>
+        <title>Contact Us | Vestiga Support & Feedback</title>
+        <meta name="description" content="Reach out to the Vestiga team for support, feature requests, or to report a bug. We are here to help." />
+        <link rel="canonical" href="https://vestiga.vercel.app/contact" />
+      </Helmet>
       {/* Navbar Mini */}
       <nav className="glass-nav fixed top-0 left-0 right-0 z-50 shadow-2xl shadow-black/20">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">

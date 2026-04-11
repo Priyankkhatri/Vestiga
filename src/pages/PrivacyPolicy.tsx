@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { BrandLockup } from '../components/common/Brand';
@@ -6,6 +7,11 @@ import { BrandLockup } from '../components/common/Brand';
 export function PrivacyPolicy() {
   return (
     <div className="bg-[#0A0F1C] min-h-screen">
+      <Helmet>
+        <title>Privacy Policy | Vestiga</title>
+        <meta name="description" content="Read our Privacy Policy to understand how Vestiga's zero-knowledge architecture ensures your data is protected and never compromised." />
+        <link rel="canonical" href="https://vestiga.vercel.app/privacy" />
+      </Helmet>
       {/* Navbar Mini */}
       <nav className="glass-nav fixed top-0 left-0 right-0 z-50 shadow-2xl shadow-black/20">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
