@@ -168,7 +168,7 @@ export function AddItem() {
     }
 
     const base = {
-      id: '',  // Will be assigned by Supabase (auto-generated UUID)
+      id: crypto.randomUUID(),
       type: selectedType!,
       title: formData.title || formData.siteName || formData.cardName || formData.fileName || 'Untitled',
       favorite: false,

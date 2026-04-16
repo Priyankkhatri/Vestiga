@@ -58,6 +58,13 @@ function reconstructItem(
   } as VaultItem;
 }
 
+function isMissingSupabaseSchemaError(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  if (error.code === '42P01' || error.code === '42703') return true;
+  const message = (error.message || '').toLowerCase();
+  return message.includes('user_encryption_meta') || message.includes('encrypted_data') || message.includes('encryption_iv');
+}
+
 // ─── Fetch & Decrypt All Items ─────────────────────────────────
 
 export async function fetchVaultItems(encryptionKey: CryptoKey): Promise<VaultItem[]> {
@@ -128,14 +135,16 @@ export async function saveVaultItem(
     const { data: { session }, error: authError } = await supabase.auth.getSession();
     if (authError || !session?.user) return { success: false, error: 'Not authenticated' };
 
+    const itemId = item.id?.trim() || crypto.randomUUID();
+
     // Encrypt all sensitive fields
-    const sensitiveData = extractSensitiveData(item);
+    const sensitiveData = extractSensitiveData({ ...item, id: itemId });
     const { encrypted, iv } = await encrypt(sensitiveData, encryptionKey);
 
-    // DO NOT send id — let Supabase auto-generate the UUID
     const { data: inserted, error } = await supabase
       .from('vault_items')
       .insert({
+        id: itemId,
         user_id: session.user.id,
         type: item.type,
         encrypted_data: encrypted,
@@ -146,11 +155,17 @@ export async function saveVaultItem(
 
     if (error) {
       console.error('[Vault] Insert error detail:', error);
+      if (isMissingSupabaseSchemaError(error)) {
+        return {
+          success: false,
+          error: 'Supabase schema is missing the encrypted vault columns or master-password table. Apply server/src/db/migrations/003_supabase_vault_encryption.sql.',
+        };
+      }
       return { success: false, error: error.message || 'Failed to save item' };
     }
 
-    // Return the Supabase-generated UUID
-    return { success: true, id: inserted?.id };
+    // Return the item UUID that was persisted
+    return { success: true, id: inserted?.id || itemId };
   } catch (error: any) {
     console.error('[Vault] Save error:', error);
     return { success: false, error: error.message || 'Vault save failed' };

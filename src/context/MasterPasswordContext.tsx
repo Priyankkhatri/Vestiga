@@ -27,6 +27,13 @@ import {
 } from '../services/cryptoService';
 import { MasterPasswordModal } from '../components/vault/MasterPasswordModal';
 
+function isMissingSupabaseSchemaError(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  if (error.code === '42P01' || error.code === '42703') return true;
+  const message = (error.message || '').toLowerCase();
+  return message.includes('user_encryption_meta');
+}
+
 // ─── Context Shape ─────────────────────────────────────────────
 
 interface MasterPasswordContextType {
@@ -165,6 +172,9 @@ export function MasterPasswordProvider({ children }: { children: ReactNode }) {
           });
 
         if (insertError) {
+          if (isMissingSupabaseSchemaError(insertError)) {
+            throw new Error('Supabase is missing the user_encryption_meta table. Apply server/src/db/migrations/003_supabase_vault_encryption.sql.');
+          }
           // Handle duplicate (idempotent: if already exists, try unlock instead)
           if (insertError.code === '23505') {
             setError('Encryption already set up. Please unlock instead.');
