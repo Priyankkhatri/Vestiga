@@ -40,9 +40,16 @@ export function Contact() {
   return (
     <div className="bg-[#0A0F1C] min-h-screen">
       <Helmet>
-        <title>Contact Us | Vestiga Support & Feedback</title>
-        <meta name="description" content="Reach out to the Vestiga team for support, feature requests, or to report a bug. We are here to help." />
+        <title>Vestiga | Contact Support & Feedback</title>
+        <meta name="description" content="Reach out to the Vestiga team for support, feature requests, or bug reports. We are here to help." />
+        <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
         <link rel="canonical" href="https://vestiga.vercel.app/contact" />
+        <meta property="og:site_name" content="Vestiga" />
+        <meta property="og:title" content="Vestiga | Contact Support & Feedback" />
+        <meta property="og:description" content="Reach out to the Vestiga team for support, feature requests, or bug reports." />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Vestiga | Contact Support & Feedback" />
+        <meta name="twitter:description" content="Reach out to the Vestiga team for support, feature requests, or bug reports." />
       </Helmet>
       {/* Navbar Mini */}
       <nav className="glass-nav fixed top-0 left-0 right-0 z-50 shadow-2xl shadow-black/20">

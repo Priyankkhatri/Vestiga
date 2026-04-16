@@ -8,9 +8,16 @@ export function PrivacyPolicy() {
   return (
     <div className="bg-[#0A0F1C] min-h-screen">
       <Helmet>
-        <title>Privacy Policy | Vestiga</title>
+        <title>Vestiga | Privacy Policy</title>
         <meta name="description" content="Read our Privacy Policy to understand how Vestiga's zero-knowledge architecture ensures your data is protected and never compromised." />
+        <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
         <link rel="canonical" href="https://vestiga.vercel.app/privacy" />
+        <meta property="og:site_name" content="Vestiga" />
+        <meta property="og:title" content="Vestiga | Privacy Policy" />
+        <meta property="og:description" content="Read how Vestiga protects your data with zero-knowledge encryption and secure cloud sync." />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Vestiga | Privacy Policy" />
+        <meta name="twitter:description" content="Read how Vestiga protects your data with zero-knowledge encryption and secure cloud sync." />
       </Helmet>
       {/* Navbar Mini */}
       <nav className="glass-nav fixed top-0 left-0 right-0 z-50 shadow-2xl shadow-black/20">

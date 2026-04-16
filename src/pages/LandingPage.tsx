@@ -112,6 +112,31 @@ const TRUST_TICKER = [
   'AI-Powered Audits',
 ];
 
+const WEBSITE_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Vestiga',
+  alternateName: ['Vestigo'],
+  url: 'https://vestiga.vercel.app/',
+  description: 'Zero-knowledge, end-to-end encrypted password manager with browser autofill and AI security audits.',
+};
+
+const SOFTWARE_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Vestiga',
+  alternateName: ['Vestigo'],
+  applicationCategory: 'SecurityApplication',
+  operatingSystem: 'Web',
+  url: 'https://vestiga.vercel.app/',
+  sameAs: ['https://github.com/Priyankkhatri/My-Vault'],
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+};
+
 // ─── Components ──────────────────────────────────────────────────
 
 function Navbar() {
@@ -976,16 +1001,21 @@ export function LandingPage() {
   return (
     <div className="bg-white min-h-screen text-gray-900 selection:bg-teal-100 selection:text-teal-900">
       <Helmet>
-        <title>Vestiga | Zero-Knowledge Password Manager</title>
-        <meta name="description" content="Vestiga is a premium, end-to-end encrypted password manager featuring AI-powered security audits, browser extension autofill, and cross-device sync. Free to start." />
+        <title>Vestiga | Zero-Knowledge Password Manager, Vault & Autofill</title>
+        <meta name="description" content="Vestiga is a premium, end-to-end encrypted password manager featuring browser autofill, AI security audits, and cross-device sync. Free to start." />
+        <meta name="keywords" content="Vestiga, Vestigo, password manager, secure vault, encrypted autofill, browser extension, zero-knowledge" />
+        <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
         <link rel="canonical" href="https://vestiga.vercel.app/" />
         <meta property="og:title" content="Vestiga | Zero-Knowledge Password Manager" />
-        <meta property="og:description" content="End-to-end encrypted password manager featuring AI audits and zero-knowledge architecture. Secure your digital life today." />
+        <meta property="og:description" content="End-to-end encrypted password manager featuring browser autofill, AI audits, and zero-knowledge architecture." />
         <meta property="og:url" content="https://vestiga.vercel.app/" />
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Vestiga" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Vestiga | Zero-Knowledge Password Manager" />
-        <meta name="twitter:description" content="End-to-end encrypted password manager featuring AI audits and zero-knowledge architecture. Secure your digital life today." />
+        <meta name="twitter:description" content="End-to-end encrypted password manager featuring browser autofill, AI audits, and zero-knowledge architecture." />
+        <script type="application/ld+json">{JSON.stringify(WEBSITE_SCHEMA)}</script>
+        <script type="application/ld+json">{JSON.stringify(SOFTWARE_SCHEMA)}</script>
       </Helmet>
       <Navbar />
       <main>

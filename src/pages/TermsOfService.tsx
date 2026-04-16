@@ -8,9 +8,16 @@ export function TermsOfService() {
   return (
     <div className="bg-[#0A0F1C] min-h-screen">
       <Helmet>
-        <title>Terms of Service | Vestiga</title>
+        <title>Vestiga | Terms of Service</title>
         <meta name="description" content="Read our Terms of Service. Learn about your rights and responsibilities when using Vestiga's zero-knowledge password manager." />
+        <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
         <link rel="canonical" href="https://vestiga.vercel.app/terms" />
+        <meta property="og:site_name" content="Vestiga" />
+        <meta property="og:title" content="Vestiga | Terms of Service" />
+        <meta property="og:description" content="Read Vestiga's Terms of Service and learn your rights and responsibilities." />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Vestiga | Terms of Service" />
+        <meta name="twitter:description" content="Read Vestiga's Terms of Service and learn your rights and responsibilities." />
       </Helmet>
       {/* Navbar Mini */}
       <nav className="glass-nav fixed top-0 left-0 right-0 z-50 shadow-2xl shadow-black/20">
