@@ -15,6 +15,7 @@
   let activeHost = null;    // The container element currently in the DOM
   let activeShadow = null;  // Its shadow root
   let activeInput = null;   // The input the dropdown is attached to
+  let activeRequestId = 0;
 
   /**
    * Injects the CSS into a shadow root.
@@ -42,7 +43,9 @@
    * @param {Array} credentials - Array of vault items
    * @param {{ usernameField, passwordField }} formDescriptor
    */
-  function renderDropdown(shadow, credentials, formDescriptor) {
+  function renderDropdown(shadow, credentials, formDescriptor, errorText) {
+    if (!shadow) return;
+
     // Clear previous dropdown content (keep styles)
     const existing = shadow.querySelector(".mv-dropdown");
     if (existing) existing.remove();
@@ -56,7 +59,12 @@
     header.innerHTML = `${brandIconHtml()} <span>Vestiga Autofill</span>`;
     dropdown.appendChild(header);
 
-    if (!credentials || credentials.length === 0) {
+    if (errorText) {
+      const empty = document.createElement("div");
+      empty.className = "mv-dropdown-empty";
+      empty.textContent = errorText;
+      dropdown.appendChild(empty);
+    } else if (!credentials || credentials.length === 0) {
       const empty = document.createElement("div");
       empty.className = "mv-dropdown-empty";
       empty.textContent = "No saved credentials for this site.";
@@ -110,6 +118,7 @@
     hide(); // close any previous dropdown
 
     activeInput = input;
+    const requestId = ++activeRequestId;
 
     // Create a host element and attach shadow DOM
     activeHost = document.createElement("div");
@@ -124,27 +133,31 @@
     chrome.runtime.sendMessage(
       { type: "VAULT", action: "getAll" },
       (response) => {
+        if (requestId !== activeRequestId || !activeShadow || activeInput !== input) {
+          return;
+        }
+
         if (chrome.runtime.lastError) {
           console.warn("[Vestiga] Could not fetch credentials:", chrome.runtime.lastError.message);
-          renderDropdown(activeShadow, [], formDescriptor);
+          renderDropdown(activeShadow, [], formDescriptor, "Unlock Vestiga to view saved credentials.");
           return;
         }
 
         let credentials = [];
         if (response && response.success && Array.isArray(response.data)) {
           // Filter by current domain if items have a url/domain field
-          const currentHost = window.location.hostname;
+          const currentHost = normalizeHost(window.location.hostname);
           credentials = response.data.filter((item) => {
-            if (item.url) {
-              try {
-                return new URL(item.url).hostname === currentHost;
-              } catch (_) {
-                return item.url.includes(currentHost);
-              }
+            const itemHosts = [item.url, item.website].map(extractHost).filter(Boolean);
+            if (itemHosts.length > 0) {
+              return itemHosts.some((host) => hostMatches(currentHost, host));
             }
             // If no URL stored, show all items
             return true;
           });
+        } else if (response && response.error) {
+          renderDropdown(activeShadow, [], formDescriptor, response.error);
+          return;
         }
 
         renderDropdown(activeShadow, credentials, formDescriptor);
@@ -162,6 +175,28 @@
     activeHost = null;
     activeShadow = null;
     activeInput = null;
+    activeRequestId++;
+  }
+
+  function normalizeHost(host) {
+    return (host || "").toLowerCase().replace(/^www\./, "");
+  }
+
+  function extractHost(value) {
+    if (!value || typeof value !== "string") return "";
+    try {
+      return normalizeHost(new URL(value).hostname);
+    } catch (_) {
+      return normalizeHost(value.replace(/^https?:\/\//i, "").split("/")[0]);
+    }
+  }
+
+  function hostMatches(currentHost, itemHost) {
+    currentHost = normalizeHost(currentHost);
+    itemHost = normalizeHost(itemHost);
+    return currentHost === itemHost ||
+      currentHost.endsWith("." + itemHost) ||
+      itemHost.endsWith("." + currentHost);
   }
 
   /**

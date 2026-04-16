@@ -86,7 +86,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     try {
       const res = await saveVaultItem(item, encryptionKey);
       if (!res.success) {
-        toast.error(res.error || 'Failed to sync item to server', { id: toastId });
+        throw new Error(res.error || 'Failed to sync item to server');
       } else {
         // Use the Supabase-generated UUID for the local item
         const now = new Date().toISOString();
@@ -100,10 +100,12 @@ export function VaultProvider({ children }: { children: ReactNode }) {
         toast.success('Item encrypted and saved', { id: toastId });
       }
     } catch (err) {
-      toast.error('An unexpected error occurred while adding item', { id: toastId });
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred while adding item';
+      toast.error(message, { id: toastId });
       console.error('[VaultContext] Add error:', err);
+      throw err;
     }
-  }, [encryptionKey]);
+  }, [addToast, encryptionKey]);
 
   const updateItem = useCallback(async (updated: VaultItem) => {
     if (!encryptionKey) {
@@ -114,16 +116,18 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     try {
       const res = await updateVaultItemServer(updated, encryptionKey);
       if (!res.success) {
-        toast.error(res.error || 'Failed to update item on server', { id: toastId });
+        throw new Error(res.error || 'Failed to update item on server');
       } else {
         setItems(prev => prev.map(item => item.id === updated.id ? updated : item));
         toast.success('Item securely updated', { id: toastId });
       }
     } catch (err) {
-      toast.error('An unexpected error occurred while updating item', { id: toastId });
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred while updating item';
+      toast.error(message, { id: toastId });
       console.error('[VaultContext] Update error:', err);
+      throw err;
     }
-  }, [encryptionKey]);
+  }, [addToast, encryptionKey]);
 
   const deleteItem = useCallback(async (id: string) => {
     const toastId = toast.loading('Deleting... ');

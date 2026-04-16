@@ -544,7 +544,12 @@ var handleMessage = async function (request) {
           return { success: false, error: "No active tab found" };
         }
 
-        await chrome.tabs.sendMessage(tabs[0].id, {
+        var activeTab = tabs[0];
+        if (!activeTab.id || !/^https?:/i.test(activeTab.url || "")) {
+          return { success: false, error: "Autofill works only on regular web pages." };
+        }
+
+        var fillResult = await sendTabMessage(activeTab.id, {
           type: "AUTOFILL_CREDENTIALS",
           credentials: {
             username: payload.username || "",
@@ -552,7 +557,9 @@ var handleMessage = async function (request) {
           }
         });
 
-        return { success: true, data: null };
+        return fillResult && fillResult.success
+          ? { success: true, data: null }
+          : { success: false, error: (fillResult && fillResult.error) || "Autofill failed" };
       }
 
       throw new Error("Unknown AUTOFILL action: " + action);

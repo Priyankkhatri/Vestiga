@@ -311,6 +311,10 @@
    */
   function attachSubmitListener(formDescriptor) {
     const { usernameField, passwordField, form } = formDescriptor;
+    if (!passwordField || passwordField.dataset.vestigaSaveAttached) {
+      return;
+    }
+    passwordField.dataset.vestigaSaveAttached = "true";
 
     let debounceTimer;
     const handler = (e) => {
@@ -329,14 +333,12 @@
       form.addEventListener("submit", handler, { capture: true });
     }
 
-    // Also listen for button clicks that might submit without a form event
-    const submitBtn =
-      form?.querySelector('button[type="submit"], input[type="submit"]') ||
-      form?.querySelector("button:not([type])");
-
-    if (submitBtn) {
-      submitBtn.addEventListener("click", handler, { capture: true });
-    }
+    findSubmitControls(formDescriptor).forEach((submitBtn) => {
+      if (!submitBtn.dataset.vestigaSaveClickAttached) {
+        submitBtn.dataset.vestigaSaveClickAttached = "true";
+        submitBtn.addEventListener("click", handler, { capture: true });
+      }
+    });
 
     // Listen for Enter key on the password field
     passwordField.addEventListener("keydown", (e) => {
@@ -344,6 +346,50 @@
         handler(e);
       }
     });
+  }
+
+  function findSubmitControls(formDescriptor) {
+    const { passwordField, form } = formDescriptor;
+    const controls = new Set();
+    const selectors = [
+      'button[type="submit"]',
+      'input[type="submit"]',
+      'button:not([type])',
+      '[role="button"]'
+    ].join(",");
+    const root = form || passwordField.closest("form, div, section, main, body") || document;
+
+    root.querySelectorAll(selectors).forEach((el) => {
+      if (looksLikeSubmitControl(el)) controls.add(el);
+    });
+
+    // Many modern login flows render the submit button just outside the field wrapper.
+    document.querySelectorAll(selectors).forEach((el) => {
+      if (controls.size >= 8) return;
+      if (!looksLikeSubmitControl(el)) return;
+      const distance = Math.abs(el.getBoundingClientRect().top - passwordField.getBoundingClientRect().top);
+      if (distance < 320) controls.add(el);
+    });
+
+    return Array.from(controls);
+  }
+
+  function looksLikeSubmitControl(el) {
+    if (!el || el.disabled) return false;
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+
+    const type = (el.getAttribute("type") || "").toLowerCase();
+    if (type === "submit") return true;
+
+    const text = [
+      el.textContent,
+      el.getAttribute("aria-label"),
+      el.getAttribute("title"),
+      el.getAttribute("value"),
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    return /\b(sign in|signin|log in|login|continue|next|submit|save|unlock)\b/.test(text);
   }
 
   /**

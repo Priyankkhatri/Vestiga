@@ -159,6 +159,10 @@ export async function saveVaultItem(
 
     if (error) {
       console.error('[Vault] Insert error detail:', error);
+      if (!isMissingSupabaseSchemaError(error)) {
+        return { success: false, error: error.message || 'Failed to save item' };
+      }
+
       const fallback = await supabase
         .from('vault_items')
         .insert({
@@ -220,6 +224,10 @@ export async function updateVaultItem(
       .eq('user_id', session.user.id);
 
     if (error) {
+      if (!isMissingSupabaseSchemaError(error)) {
+        return { success: false, error: error.message || 'Failed to update item' };
+      }
+
       const { error: fallbackError } = await supabase
         .from('vault_items')
         .update({

@@ -337,6 +337,31 @@
     }
   }
 
+  function selectBestFormDescriptor(detectedForms) {
+    if (!detectedForms || detectedForms.length === 0) {
+      return null;
+    }
+
+    const active = document.activeElement;
+    if (active) {
+      const activeMatch = detectedForms.find((descriptor) => (
+        descriptor.passwordField === active ||
+        descriptor.usernameField === active ||
+        (descriptor.form && descriptor.form.contains(active))
+      ));
+      if (activeMatch) {
+        return activeMatch;
+      }
+    }
+
+    const viewportMatch = detectedForms.find((descriptor) => {
+      const rect = descriptor.passwordField.getBoundingClientRect();
+      return rect.top >= 0 && rect.left >= 0 && rect.top < window.innerHeight && rect.left < window.innerWidth;
+    });
+
+    return viewportMatch || detectedForms[0];
+  }
+
   // --- Listen for AUTOFILL_CREDENTIALS from popup → background → here ---
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message && message.type === "AUTH_SYNC_REQUEST") {
@@ -395,9 +420,10 @@
     if (message && message.type === "AUTOFILL_CREDENTIALS" && message.credentials) {
       const credentials = message.credentials;
       const detectedForms = window.MyVaultFormDetector.detectForms();
+      const descriptor = selectBestFormDescriptor(detectedForms);
 
-      if (detectedForms.length > 0) {
-        window.MyVaultAutofill.fill(credentials, detectedForms[0]);
+      if (descriptor) {
+        window.MyVaultAutofill.fill(credentials, descriptor);
         sendResponse({ success: true });
       } else {
         console.warn("[Vestiga] No login forms detected on this page.");
