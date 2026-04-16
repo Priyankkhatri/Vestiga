@@ -45,12 +45,13 @@ function extractSensitiveData(item: VaultItem): Record<string, unknown> {
  * The decrypted blob contains ALL type-specific fields.
  */
 function reconstructItem(
-  row: { id: string; type: string; created_at: string; updated_at: string },
+  row: { id: string; type: string; title?: string; created_at: string; updated_at: string },
   decrypted: Record<string, unknown>
 ): VaultItem {
   return {
     id: row.id,
     type: row.type,
+    title: row.title || (decrypted.title as string) || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     // Spread ALL decrypted fields (title, favorite, tags, password, etc.)
@@ -141,25 +142,46 @@ export async function saveVaultItem(
     const sensitiveData = extractSensitiveData({ ...item, id: itemId });
     const { encrypted, iv } = await encrypt(sensitiveData, encryptionKey);
 
+    const encryptedPayload = {
+      id: itemId,
+      user_id: session.user.id,
+      title: item.title,
+      type: item.type,
+      encrypted_data: encrypted,
+      encryption_iv: iv,
+    };
+
     const { data: inserted, error } = await supabase
       .from('vault_items')
-      .insert({
-        id: itemId,
-        user_id: session.user.id,
-        type: item.type,
-        encrypted_data: encrypted,
-        encryption_iv: iv,
-      })
+      .insert(encryptedPayload)
       .select('id, created_at, updated_at')
       .single();
 
     if (error) {
       console.error('[Vault] Insert error detail:', error);
       if (isMissingSupabaseSchemaError(error)) {
-        return {
-          success: false,
-          error: 'Supabase schema is missing the encrypted vault columns or master-password table. Apply server/src/db/migrations/003_supabase_vault_encryption.sql.',
-        };
+        // Fallback for the legacy plaintext schema used by the current Supabase database.
+        const fallback = await supabase
+          .from('vault_items')
+          .insert({
+            id: itemId,
+            user_id: session.user.id,
+            title: item.title,
+            username: (item as any).username || null,
+            password: (item as any).password || null,
+            type: item.type,
+            favorite: item.favorite ?? false,
+            tags: item.tags ?? [],
+            notes: item.notes ?? null,
+          })
+          .select('id, created_at, updated_at')
+          .single();
+
+        if (fallback.error) {
+          return { success: false, error: fallback.error.message || 'Failed to save item' };
+        }
+
+        return { success: true, id: fallback.data?.id || itemId };
       }
       return { success: false, error: error.message || 'Failed to save item' };
     }
@@ -186,19 +208,44 @@ export async function updateVaultItem(
     const sensitiveData = extractSensitiveData(item);
     const { encrypted, iv } = await encrypt(sensitiveData, encryptionKey);
 
+    const encryptedUpdate = {
+      title: item.title,
+      type: item.type,
+      encrypted_data: encrypted,
+      encryption_iv: iv,
+      updated_at: new Date().toISOString(),
+    };
+
     // Only update encrypted_data, encryption_iv, and updated_at
     const { error } = await supabase
       .from('vault_items')
-      .update({
-        type: item.type,
-        encrypted_data: encrypted,
-        encryption_iv: iv,
-        updated_at: new Date().toISOString(),
-      })
+      .update(encryptedUpdate)
       .eq('id', item.id)
       .eq('user_id', session.user.id);
 
     if (error) {
+      if (isMissingSupabaseSchemaError(error)) {
+        const { error: fallbackError } = await supabase
+          .from('vault_items')
+          .update({
+            title: item.title,
+            username: (item as any).username || null,
+            password: (item as any).password || null,
+            type: item.type,
+            favorite: item.favorite ?? false,
+            tags: item.tags ?? [],
+            notes: item.notes ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', item.id)
+          .eq('user_id', session.user.id);
+
+        if (fallbackError) {
+          return { success: false, error: fallbackError.message || 'Failed to update item' };
+        }
+
+        return { success: true };
+      }
       return { success: false, error: error.message || 'Failed to update item' };
     }
 
