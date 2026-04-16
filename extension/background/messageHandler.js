@@ -437,6 +437,12 @@ var handleMessage = async function (request) {
 
         case "add": {
           var vaultSessionAdd = await self.authService.getSession();
+          if (!vaultSessionAdd) {
+            var syncedSession = await syncSessionFromTabs();
+            if (syncedSession && syncedSession.success) {
+              vaultSessionAdd = await self.authService.getSession();
+            }
+          }
 
           // If the extension vault is unlocked, save directly.
           if (vaultSessionAdd && self.authService.isMasterKeySet()) {
@@ -446,17 +452,18 @@ var handleMessage = async function (request) {
             return { success: true, data: added };
           }
 
-          // If the extension is locked, queue this save and ask for the master password
-          // inside the extension UI. Do not ask for master passwords inside web pages.
-          var queued = await storePendingVaultAdd(payload);
-          if (queued.success) {
-            await openExtensionUnlockTab();
+          // If the extension is authenticated but locked, queue this save.
+          // The content prompt will ask for the master password and flush it.
+          if (vaultSessionAdd) {
+            var queued = await storePendingVaultAdd(payload);
+            if (!queued.success) {
+              return queued;
+            }
+
             return {
               success: false,
               pending: true,
-              error: vaultSessionAdd
-                ? "Unlock Vestiga extension to finish saving."
-                : "Sign in and unlock Vestiga extension to finish saving."
+              error: "Enter your Vestiga master password to finish saving."
             };
           }
 
