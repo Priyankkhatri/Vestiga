@@ -130,6 +130,7 @@ var vaultService = {
     var encryptedPayload = {
       id: itemId,
       user_id: session.user.id,
+      title: item.title || "Untitled",
       type: normalizedType,
       encrypted_data: enc.encrypted,
       encryption_iv: enc.iv,
@@ -205,6 +206,8 @@ var vaultService = {
       + "&user_id=eq." + session.user.id;
 
     var encryptedResult = await self.supabaseRequest("PATCH", path, {
+      title: data.title || "Untitled",
+      type: normalizedType,
       encrypted_data: enc.encrypted,
       encryption_iv: enc.iv,
       updated_at: new Date().toISOString(),

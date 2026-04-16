@@ -54,6 +54,10 @@
         <button class="mv-save-btn secondary" id="mv-dismiss">Dismiss</button>
         <button class="mv-save-btn primary" id="mv-save">Save</button>
       </div>
+      <div class="mv-save-actions" id="mv-help-actions" style="display:none; gap: 10px; margin-top: 10px;">
+        <button class="mv-save-btn secondary" id="mv-open-extension" type="button">Open Extension</button>
+        <button class="mv-save-btn secondary" id="mv-open-webapp" type="button">Open Web App</button>
+      </div>
       <div class="mv-save-status" id="mv-status" aria-live="polite"></div>
     `;
 
@@ -65,14 +69,16 @@
       const saveButton = shadow.getElementById("mv-save");
       const dismissButton = shadow.getElementById("mv-dismiss");
       const statusEl = shadow.getElementById("mv-status");
+      const helpActions = shadow.getElementById("mv-help-actions");
 
       saveButton.disabled = true;
       dismissButton.disabled = true;
       saveButton.textContent = "Saving...";
       statusEl.textContent = "Saving...";
+      helpActions.style.display = "none";
 
-      const saved = await saveCredentials(credentials);
-      if (saved) {
+      const result = await saveCredentials(credentials);
+      if (result.success) {
         dismiss();
         return;
       }
@@ -80,11 +86,34 @@
       saveButton.disabled = false;
       dismissButton.disabled = false;
       saveButton.textContent = "Save";
-      statusEl.textContent = "Save failed. Please try again.";
+      const msg = (result && typeof result.error === "string" && result.error.trim())
+        ? result.error.trim()
+        : "Save failed. Please try again.";
+      statusEl.textContent = msg;
+
+      // If we can detect a likely cause, offer a one-click escape hatch.
+      const lower = msg.toLowerCase();
+      const showHelp =
+        lower.includes("not authenticated") ||
+        lower.includes("vault is locked") ||
+        lower.includes("open vestiga") ||
+        lower.includes("no signed-in vestiga") ||
+        lower.includes("no unlocked vestiga");
+      if (showHelp) {
+        helpActions.style.display = "flex";
+      }
     });
 
     shadow.getElementById("mv-dismiss").addEventListener("click", () => {
       dismiss();
+    });
+
+    shadow.getElementById("mv-open-extension").addEventListener("click", () => {
+      chrome.runtime.sendMessage({ type: "NAV", action: "openExtensionUnlock" }, () => {});
+    });
+
+    shadow.getElementById("mv-open-webapp").addEventListener("click", () => {
+      chrome.runtime.sendMessage({ type: "NAV", action: "openWebApp" }, () => {});
     });
 
     // Auto-dismiss after 15 seconds
@@ -109,15 +138,15 @@
         (response) => {
           if (chrome.runtime.lastError) {
             console.warn("[Vestiga] Failed to save credentials:", chrome.runtime.lastError.message);
-            resolve(false);
+            resolve({ success: false, error: chrome.runtime.lastError.message });
             return;
           }
 
           if (response && response.success) {
-            resolve(true);
+            resolve({ success: true });
           } else {
             console.warn("[Vestiga] Save failed:", response?.error);
-            resolve(false);
+            resolve({ success: false, error: response?.error || "Save failed" });
           }
         }
       );

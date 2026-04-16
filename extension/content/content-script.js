@@ -19,6 +19,12 @@
   const WEBAPP_AUTH_CHANGED = "VESTIGA_AUTH_SESSION_CHANGED";
   const WEBAPP_VAULT_REQUEST = "VESTIGA_VAULT_STATE_REQUEST";
   const WEBAPP_VAULT_RESPONSE = "VESTIGA_VAULT_STATE_RESPONSE";
+  const WEBAPP_VAULT_ADD_REQUEST = "VESTIGA_VAULT_ADD_REQUEST";
+  const WEBAPP_VAULT_ADD_RESPONSE = "VESTIGA_VAULT_ADD_RESPONSE";
+
+  // Background tabs can be throttled/suspended; give the Vestiga web app a bit more time to respond.
+  const WEBAPP_BRIDGE_TIMEOUT_MS = 15000;
+  const WEBAPP_BRIDGE_FAST_TIMEOUT_MS = 4000;
 
   function isSessionPayload(value) {
     return Boolean(
@@ -56,6 +62,57 @@
     );
   }
 
+  function requestVaultAddFromWebApp(item) {
+    if (!/^https?:$/.test(window.location.protocol)) {
+      return Promise.resolve(null);
+    }
+
+    return new Promise((resolve) => {
+      const requestId = createRequestId();
+      let settled = false;
+
+      const cleanup = () => {
+        settled = true;
+        clearTimeout(timeoutId);
+        window.removeEventListener("message", handleMessage);
+      };
+
+      const finish = (payload) => {
+        if (settled) return;
+        cleanup();
+        resolve(payload);
+      };
+
+      const handleMessage = (event) => {
+        if (event.source !== window) return;
+
+        const data = event.data;
+        if (
+          !data ||
+          data.source !== WEBAPP_SOURCE ||
+          data.type !== WEBAPP_VAULT_ADD_RESPONSE ||
+          data.requestId !== requestId
+        ) {
+          return;
+        }
+
+        finish(data.payload || null);
+      };
+
+      const timeoutId = setTimeout(() => finish(null), WEBAPP_BRIDGE_TIMEOUT_MS);
+
+      window.addEventListener("message", handleMessage);
+      window.postMessage(
+        {
+          source: EXTENSION_SOURCE,
+          type: WEBAPP_VAULT_ADD_REQUEST,
+          requestId,
+          payload: item
+        },
+        window.location.origin
+      );
+    });
+  }
   function requestSessionFromWebApp() {
     if (!/^https?:$/.test(window.location.protocol)) {
       return Promise.resolve(null);
@@ -93,7 +150,7 @@
         finish(isSessionPayload(data.session) ? data.session : null);
       };
 
-      const timeoutId = setTimeout(() => finish(null), 1500);
+      const timeoutId = setTimeout(() => finish(null), WEBAPP_BRIDGE_FAST_TIMEOUT_MS);
 
       window.addEventListener("message", handleMessage);
       window.postMessage(
@@ -144,7 +201,7 @@
         finish(isVaultPayload(data.payload) ? data.payload : null);
       };
 
-      const timeoutId = setTimeout(() => finish(null), 1500);
+      const timeoutId = setTimeout(() => finish(null), WEBAPP_BRIDGE_FAST_TIMEOUT_MS);
 
       window.addEventListener("message", handleMessage);
       window.postMessage(
@@ -314,6 +371,22 @@
         })
         .catch((error) => {
           sendResponse({ success: false, error: error.message || "Vault sync failed" });
+        });
+
+      return true;
+    }
+
+    if (message && message.type === "WEBAPP_VAULT_ADD") {
+      requestVaultAddFromWebApp(message.payload)
+        .then((payload) => {
+          if (!payload) {
+            sendResponse({ success: false, error: "No unlocked Vestiga web app tab found" });
+            return;
+          }
+          sendResponse(payload);
+        })
+        .catch((error) => {
+          sendResponse({ success: false, error: error.message || "Vault save failed" });
         });
 
       return true;

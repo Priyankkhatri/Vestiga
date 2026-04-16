@@ -15,6 +15,7 @@
   var currentUser = null;
   var masterPwMode = "unlock"; // "setup" or "unlock"
   var webAppVaultPollTimer = null;
+  var hasPendingSave = false;
 
   // Helpers
 
@@ -125,13 +126,17 @@
 
     if (mode === "setup") {
       titleEl.textContent = "Create Master Password";
-      subtitleEl.textContent = "This password encrypts all your vault data";
+      subtitleEl.textContent = hasPendingSave
+        ? "Create your master password to encrypt and save this login"
+        : "This password encrypts all your vault data";
       submitBtn.textContent = "Create & Encrypt Vault";
       confirmWrap.classList.remove("hidden");
       warningEl.classList.remove("hidden");
     } else {
       titleEl.textContent = "Unlock Vault";
-      subtitleEl.textContent = "Enter your master password to decrypt your vault";
+      subtitleEl.textContent = hasPendingSave
+        ? "Enter your master password to encrypt and save this login"
+        : "Enter your master password to decrypt your vault";
       submitBtn.textContent = "Unlock Vault";
       confirmWrap.classList.add("hidden");
       warningEl.classList.add("hidden");
@@ -187,8 +192,38 @@
     showLoginScreen();
   }
 
+  async function refreshPendingSaveStatus() {
+    try {
+      var res = await sendMessage({ type: "VAULT", action: "pendingAddStatus" });
+      hasPendingSave = Boolean(res && res.success && res.data && res.data.hasPendingAdd);
+    } catch (_) {
+      hasPendingSave = false;
+    }
+    return hasPendingSave;
+  }
+
+  async function flushPendingSave() {
+    if (!hasPendingSave) {
+      return false;
+    }
+
+    var res = await sendMessage({ type: "VAULT", action: "flushPendingAdd" });
+    if (res && res.success) {
+      hasPendingSave = false;
+      if (res.data) {
+        showToast("Login saved to Vestiga", "success");
+        return true;
+      }
+      return false;
+    }
+
+    showToast((res && res.error) || "Pending save failed", "error");
+    return false;
+  }
+
   async function checkMasterKeyStatus(pollCount) {
     pollCount = typeof pollCount === "number" ? pollCount : 0;
+    await refreshPendingSaveStatus();
 
     try {
       var res = await sendMessage({ type: "MASTER_KEY", action: "status" });
@@ -196,11 +231,17 @@
         if (res.data.isSet) {
           clearWebAppPollTimer();
           showVaultView(currentUser);
+          await flushPendingSave();
           await fetchVault();
           return;
         }
 
         if (res.data.source === "webapp") {
+          if (hasPendingSave) {
+            showMasterPwScreen("unlock");
+            return;
+          }
+
           showVaultView(currentUser);
 
           if (res.data.isLoading && pollCount < 8) {
@@ -354,6 +395,8 @@
       if (res && res.success) {
         showToast(masterPwMode === "setup" ? "Vault encrypted!" : "Vault unlocked!", "success");
         showVaultView(currentUser);
+        await refreshPendingSaveStatus();
+        await flushPendingSave();
         setTimeout(function () { fetchVault(); }, 100);
       } else {
         errorEl.textContent = (res && res.error) || "Failed. Please try again.";
